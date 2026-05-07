@@ -1,0 +1,43 @@
+# Example: ~10 EU/UK robotics labs to start with.
+# Copy this to ./labs.yaml in your working dir, edit, then run `frontier-scout roster`.
+
+labs:
+  - name: ETH Zurich — Robotic Systems Lab
+    people_url: https://rsl.ethz.ch/people.html
+    arxiv_categories: [cs.RO, cs.LG]
+
+  - name: ETH Zurich — Autonomous Systems Lab
+    people_url: https://asl.ethz.ch/the-lab/people.html
+    arxiv_categories: [cs.RO]
+
+  - name: EPFL — BioRobotics Laboratory
+    people_url: https://www.epfl.ch/labs/biorob/people/
+    arxiv_categories: [cs.RO]
+
+  - name: Imperial College — Hamlyn Centre
+    people_url: https://www.imperial.ac.uk/hamlyn-centre/people/
+    arxiv_categories: [cs.RO]
+
+  - name: Imperial College — Personal Robotics Lab
+    people_url: https://www.imperial.ac.uk/personal-robotics/people/
+    arxiv_categories: [cs.RO, cs.AI]
+
+  - name: Oxford Robotics Institute
+    people_url: https://ori.ox.ac.uk/people/
+    arxiv_categories: [cs.RO]
+
+  - name: TUM — Munich Institute of Robotics and Machine Intelligence
+    people_url: https://www.mirmi.tum.de/en/mirmi/team/
+    arxiv_categories: [cs.RO]
+
+  - name: KTH — Robotics, Perception and Learning
+    people_url: https://www.kth.se/is/rpl/people-1.673586
+    arxiv_categories: [cs.RO, cs.CV]
+
+  - name: INRIA — Willow
+    people_url: https://www.di.ens.fr/willow/people.html
+    arxiv_categories: [cs.RO, cs.CV]
+
+  - name: Edinburgh Centre for Robotics
+    people_url: https://www.edinburgh-robotics.org/students
+    arxiv_categories: [cs.RO]

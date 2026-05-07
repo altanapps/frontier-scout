@@ -1,0 +1,57 @@
+# Copy this to `.github/workflows/daily-digest.yml` in your fork and add
+# ANTHROPIC_API_KEY (and optionally SLACK_WEBHOOK_URL) as repository secrets.
+#
+# Roster scraping is intentionally NOT in this workflow — it's an expensive
+# one-shot you re-run manually when you change labs.yaml.
+
+name: Daily Digest
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - run: pip install -e .
+
+      - name: Restore database
+        uses: actions/cache@v4
+        with:
+          path: frontier.db
+          key: frontier-db-${{ github.run_id }}
+          restore-keys: |
+            frontier-db-
+
+      - name: Pull new papers
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: frontier-scout papers --since 1d
+
+      - name: Build digest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: frontier-scout digest --since 1d > digest.md
+
+      - name: Post to Slack
+        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          PAYLOAD=$(jq -Rs '{text: .}' digest.md)
+          curl -fsS -X POST -H 'Content-Type: application/json' \
+            --data "$PAYLOAD" "$SLACK_WEBHOOK_URL"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ github.run_id }}
+          path: digest.md
