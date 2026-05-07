@@ -22,6 +22,26 @@ No hype, no marketing. Concrete claim or technique only.
 Output the sentence only — no preamble, no quotes, no markdown.
 """
 
+DRAFT_PROMPT = """\
+You are drafting a short, warm email from a VC/operator to a researcher
+who just published a paper. The goal is to start a real conversation —
+not to pitch.
+
+Constraints:
+- Maximum 5 sentences. Aim for 3–4.
+- Open with one specific, technical question about the paper. Reference a
+  concrete claim, technique, or result from the abstract — not a generality.
+- One sentence saying who the sender is. No pitching, no fund-name dropping.
+- End with a low-cost ask: 15 minutes on a call, OR a reply pointing to a
+  related paper they recommend. Sender's choice — pick the one that fits.
+- Plain text. No subject line. Start with "Hi <first name>,". No "Dear Dr. X".
+- Sound like a human who actually read the paper. Banned words: exciting,
+  groundbreaking, fascinating, synergy, leverage, in the space of, at the
+  intersection of, deeply impressed.
+
+Output the email body only. No commentary, no signature block.
+"""
+
 DEFAULT_MODEL = "claude-haiku-4-5-20251001"
 
 
@@ -64,6 +84,30 @@ def explain(title: str, summary: str, model: str = DEFAULT_MODEL) -> str:
         messages=[{
             "role": "user",
             "content": f"Title: {title}\n\nAbstract: {summary}",
+        }],
+    )
+    return msg.content[0].text.strip()
+
+
+def draft_outreach(
+    person_name: str,
+    paper_title: str,
+    paper_summary: str,
+    sender_intro: str,
+    model: str = DEFAULT_MODEL,
+) -> str:
+    msg = _client().messages.create(
+        model=model,
+        max_tokens=600,
+        system=[{"type": "text", "text": DRAFT_PROMPT, "cache_control": {"type": "ephemeral"}}],
+        messages=[{
+            "role": "user",
+            "content": (
+                f"Recipient: {person_name}\n"
+                f"Sender intro (rephrase or compress as needed): {sender_intro}\n\n"
+                f"Paper title: {paper_title}\n"
+                f"Paper abstract: {paper_summary}"
+            ),
         }],
     )
     return msg.content[0].text.strip()

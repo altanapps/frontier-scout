@@ -10,6 +10,11 @@ CREATE TABLE IF NOT EXISTS people (
     role TEXT,
     profile_url TEXT,
     research_area TEXT,
+    github_handle TEXT,
+    twitter_handle TEXT,
+    personal_site TEXT,
+    email TEXT,
+    enriched_at TEXT,
     UNIQUE(lab, name)
 );
 
@@ -26,9 +31,38 @@ CREATE TABLE IF NOT EXISTS papers (
     why_it_matters TEXT
 );
 
+CREATE TABLE IF NOT EXISTS signals (
+    id INTEGER PRIMARY KEY,
+    person_name TEXT NOT NULL,
+    lab TEXT,
+    source TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    detail TEXT,
+    url TEXT,
+    observed_at TEXT NOT NULL,
+    UNIQUE(person_name, kind, url)
+);
+
 CREATE INDEX IF NOT EXISTS idx_papers_published ON papers(published);
 CREATE INDEX IF NOT EXISTS idx_papers_lab ON papers(matched_lab);
+CREATE INDEX IF NOT EXISTS idx_signals_observed ON signals(observed_at);
 """
+
+MIGRATIONS = [
+    "ALTER TABLE people ADD COLUMN github_handle TEXT",
+    "ALTER TABLE people ADD COLUMN twitter_handle TEXT",
+    "ALTER TABLE people ADD COLUMN personal_site TEXT",
+    "ALTER TABLE people ADD COLUMN email TEXT",
+    "ALTER TABLE people ADD COLUMN enriched_at TEXT",
+]
+
+
+def _migrate(con: sqlite3.Connection) -> None:
+    for sql in MIGRATIONS:
+        try:
+            con.execute(sql)
+        except sqlite3.OperationalError:
+            pass
 
 
 @contextmanager
@@ -36,6 +70,7 @@ def connect(path: Path):
     con = sqlite3.connect(path)
     con.row_factory = sqlite3.Row
     con.executescript(SCHEMA)
+    _migrate(con)
     try:
         yield con
         con.commit()
