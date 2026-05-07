@@ -20,6 +20,8 @@ A small CLI for systematically scouting frontier-tech research — robotics, BCI
 
 One config file (`labs.yaml`), one SQLite file, a handful of cron-friendly commands.
 
+**See it in action:** [`examples/sample-digest.md`](examples/sample-digest.md) — real output from a 3-lab, 60-day run.
+
 ## Install
 
 ```bash

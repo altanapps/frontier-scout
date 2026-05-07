@@ -1,0 +1,264 @@
+# Comprehensive EU + UK frontier-tech research labs.
+# 58 labs across robotics, embodied AI, foundational ML, computer vision,
+# computational neuroscience, computational biology, neuromorphic hardware,
+# and quantum.
+#
+# Each people_url was verified live by the research agent before inclusion,
+# but lab pages move — re-run `frontier-scout roster` and watch for fetch
+# failures.
+#
+# Drop this in as your `labs.yaml` (or cherry-pick) and run:
+#   frontier-scout roster
+#   frontier-scout enrich --limit 30
+#   frontier-scout papers --since 7d
+#   frontier-scout digest --since 7d
+
+labs:
+
+  # ─── Robotics: starter set (already in examples/labs.yaml) ───────────────
+
+  - name: "ETH Zurich — Robotic Systems Lab"
+    people_url: https://rsl.ethz.ch/people.html
+    arxiv_categories: [cs.RO, cs.LG]
+
+  - name: "ETH Zurich — Autonomous Systems Lab"
+    people_url: https://asl.ethz.ch/the-lab/people.html
+    arxiv_categories: [cs.RO]
+
+  - name: "EPFL — BioRobotics Laboratory"
+    people_url: https://www.epfl.ch/labs/biorob/people/
+    arxiv_categories: [cs.RO]
+
+  - name: "Imperial College — Hamlyn Centre"
+    people_url: https://www.imperial.ac.uk/hamlyn-centre/people/
+    arxiv_categories: [cs.RO]
+
+  - name: "Imperial College — Personal Robotics Lab"
+    people_url: https://www.imperial.ac.uk/personal-robotics/people/
+    arxiv_categories: [cs.RO, cs.AI]
+
+  - name: "Oxford Robotics Institute"
+    people_url: https://ori.ox.ac.uk/people/
+    arxiv_categories: [cs.RO]
+
+  - name: "TUM — Munich Institute of Robotics and Machine Intelligence"
+    people_url: https://www.mirmi.tum.de/en/mirmi/team/
+    arxiv_categories: [cs.RO]
+
+  - name: "KTH — Robotics, Perception and Learning"
+    people_url: https://www.kth.se/is/rpl/people-1.673586
+    arxiv_categories: [cs.RO, cs.CV]
+
+  - name: "INRIA / ENS — Willow"
+    people_url: https://www.di.ens.fr/willow/people.html
+    arxiv_categories: [cs.RO, cs.CV]
+
+  - name: "Edinburgh Centre for Robotics"
+    people_url: https://www.edinburgh-robotics.org/students
+    arxiv_categories: [cs.RO]
+
+  # ─── Robotics: additions (manipulation, mobile, soft, surgical, AV) ──────
+
+  - name: "TU Delft — Cognitive Robotics"
+    people_url: https://www.tudelft.nl/en/me/about/departments/cognitive-robotics-cor/people
+    arxiv_categories: [cs.RO, cs.LG, cs.CV]
+
+  - name: "KU Leuven — Robotics Research Group (PMA)"
+    people_url: https://www.mech.kuleuven.be/en/pma/research/robotics/people
+    arxiv_categories: [cs.RO, cs.SY]
+
+  - name: "DFKI — Robotics Innovation Center Bremen"
+    people_url: https://robotik.dfki-bremen.de/en/about-us/staff/listview
+    arxiv_categories: [cs.RO, cs.LG]
+
+  - name: "University of Twente — Robotics and Mechatronics (RaM)"
+    people_url: https://www.ram.eemcs.utwente.nl/about-us/staff
+    arxiv_categories: [cs.RO, cs.SY]
+
+  - name: "Politecnico di Milano — AIRLab"
+    people_url: https://airlab.deib.polimi.it/people/
+    arxiv_categories: [cs.RO, cs.AI, cs.LG]
+
+  - name: "Politecnico di Milano — MeRLIn (Mechatronics and Robotics Lab)"
+    people_url: https://merlin.deib.polimi.it/?page_id=25
+    arxiv_categories: [cs.RO, cs.SY]
+
+  - name: "INRIA Grenoble — CHROMA"
+    people_url: https://team.inria.fr/chroma/en/team-members/
+    arxiv_categories: [cs.RO, cs.MA]
+
+  - name: "INRIA Rennes — Rainbow"
+    people_url: https://team.inria.fr/rainbow/team/
+    arxiv_categories: [cs.RO, cs.CV]
+
+  - name: "INRIA Lille — DEFROST (Soft Robotics)"
+    people_url: https://www.defrost.inria.fr/team/
+    arxiv_categories: [cs.RO, cs.SY]
+
+  - name: "INRIA Bordeaux — AUCTUS"
+    people_url: https://auctus-team.gitlabpages.inria.fr/team-members/
+    arxiv_categories: [cs.RO, cs.HC]
+
+  - name: "Sapienza University of Rome — ALCOR Lab"
+    people_url: https://alcorlab.diag.uniroma1.it/people
+    arxiv_categories: [cs.CV, cs.RO, cs.LG]
+
+  - name: "Universidad Carlos III de Madrid — Robotics Lab"
+    people_url: https://roboticslab.uc3m.es/people
+    arxiv_categories: [cs.RO, cs.HC]
+
+  - name: "University of Bonn — Humanoid Robots Lab (Bennewitz)"
+    people_url: https://www.hrl.uni-bonn.de/people
+    arxiv_categories: [cs.RO, cs.CV]
+
+  - name: "University of Bonn — Photogrammetry and Robotics (StachnissLab)"
+    people_url: https://www.ipb.uni-bonn.de/people/
+    arxiv_categories: [cs.RO, cs.CV]
+
+  - name: "University of Freiburg — Robot Learning Lab (Valada)"
+    people_url: https://rl.uni-freiburg.de/people
+    arxiv_categories: [cs.RO, cs.LG, cs.CV]
+
+  - name: "Aalto University — Intelligent Robotics"
+    people_url: https://irobotics.aalto.fi/people/
+    arxiv_categories: [cs.RO, cs.LG]
+
+  - name: "University of Pisa — Centro E. Piaggio"
+    people_url: https://www.centropiaggio.unipi.it/people
+    arxiv_categories: [cs.RO, cs.SY]
+
+  - name: "University of Naples Federico II — PRISMA Lab"
+    people_url: https://prisma.dieti.unina.it/index.php/people/ph-d-students
+    arxiv_categories: [cs.RO, cs.SY]
+
+  - name: "CTU Prague — CIIRC IMPACT (Intelligent Machine Perception)"
+    people_url: https://impact.ciirc.cvut.cz/people/
+    arxiv_categories: [cs.CV, cs.RO, cs.LG]
+
+  - name: "University of Edinburgh — Robust Autonomy and Decisions (RAD)"
+    people_url: https://rad.inf.ed.ac.uk/rad-people.html
+    arxiv_categories: [cs.RO, cs.LG, cs.AI]
+
+  - name: "University of Cambridge — Bio-Inspired Robotics Laboratory"
+    people_url: https://birlab.org/members/
+    arxiv_categories: [cs.RO]
+
+  - name: "UCL — Robot Perception and Learning Lab"
+    people_url: https://rpl-as-ucl.github.io/people/
+    arxiv_categories: [cs.RO, cs.CV, cs.LG]
+
+  - name: "University of Tartu — Autonomous Driving Lab"
+    people_url: https://adl.cs.ut.ee/discover/team
+    arxiv_categories: [cs.RO, cs.CV, cs.LG]
+
+  # ─── Foundational AI / ML ────────────────────────────────────────────────
+
+  - name: "UCL — UKRI CDT in Foundational AI"
+    people_url: https://www.ucl.ac.uk/foundational-ai-cdt/people/student-profiles
+    arxiv_categories: [cs.LG, cs.AI, cs.CL]
+
+  - name: "Oxford — Computational Statistics and Machine Learning (OxCSML)"
+    people_url: https://csml.stats.ox.ac.uk/people/
+    arxiv_categories: [stat.ML, cs.LG]
+
+  - name: "Oxford — Applied and Theoretical Machine Learning Group (OATML)"
+    people_url: https://oatml.cs.ox.ac.uk/members.html
+    arxiv_categories: [cs.LG, stat.ML, cs.AI]
+
+  - name: "Cambridge — Machine Learning Group"
+    people_url: https://mlg.eng.cam.ac.uk/people/
+    arxiv_categories: [cs.LG, stat.ML]
+
+  - name: "Aalto University — Probabilistic Machine Learning Group"
+    people_url: https://research.cs.aalto.fi/pml/personnel.shtml
+    arxiv_categories: [stat.ML, cs.LG]
+
+  - name: "INRIA Paris — SIERRA (ML / Optimization)"
+    people_url: https://sierra-mlopt.github.io/team/
+    arxiv_categories: [cs.LG, math.OC, stat.ML]
+
+  - name: "ETH Zurich — ETH AI Center (Faculty)"
+    people_url: https://ai.ethz.ch/about-us/people/faculty.html
+    arxiv_categories: [cs.LG, cs.AI, stat.ML]
+
+  - name: "ETH Zurich — ETH AI Center (Doctoral Fellows)"
+    people_url: https://ai.ethz.ch/about-us/people/doctoral-students.html
+    arxiv_categories: [cs.LG, cs.AI, stat.ML]
+
+  - name: "EPFL — Laboratory for Information and Inference Systems (LIONS)"
+    people_url: https://www.epfl.ch/labs/lions/people
+    arxiv_categories: [cs.LG, math.OC, stat.ML]
+
+  - name: "ELLIS Institute Tübingen"
+    people_url: https://institute-tue.ellis.eu/people
+    arxiv_categories: [cs.LG, cs.AI, stat.ML]
+
+  # ─── Computer Vision ─────────────────────────────────────────────────────
+
+  - name: "EPFL — Computer Vision Laboratory (CVLab)"
+    people_url: https://www.epfl.ch/labs/cvlab/people/
+    arxiv_categories: [cs.CV, cs.LG]
+
+  - name: "KU Leuven — ESAT-PSI Processing Speech and Images"
+    people_url: https://www.esat.kuleuven.be/psi/members
+    arxiv_categories: [cs.CV, cs.LG]
+
+  - name: "INRIA Grenoble — THOTH"
+    people_url: https://team.inria.fr/thoth/team-members/
+    arxiv_categories: [cs.CV, cs.LG]
+
+  - name: "Heidelberg University — Computer Vision and Learning Lab"
+    people_url: https://hci.iwr.uni-heidelberg.de/vislearn/people/
+    arxiv_categories: [cs.CV, cs.LG]
+
+  - name: "University of Tübingen — Autonomous Vision Group (Geiger)"
+    people_url: https://uni-tuebingen.de/en/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/informatik/lehrstuehle/autonomous-vision/team/
+    arxiv_categories: [cs.CV, cs.LG, cs.RO]
+
+  # ─── Computational Neuroscience / BCI ────────────────────────────────────
+
+  - name: "UCL — Gatsby Computational Neuroscience Unit"
+    people_url: https://www.ucl.ac.uk/gatsby/people
+    arxiv_categories: [stat.ML, cs.LG, q-bio.NC]
+
+  - name: "Imperial College London — Clopath Lab"
+    people_url: https://cclopath.bg-research.cc.ic.ac.uk/members/
+    arxiv_categories: [q-bio.NC, cs.NE]
+
+  - name: "Imperial College London — Brain & Behaviour Lab (Faisal)"
+    people_url: https://faisallab.org/members/
+    arxiv_categories: [q-bio.NC, cs.LG, eess.SP]
+
+  - name: "Tübingen — MackeLab (ML in Science / Computational Neuroscience)"
+    people_url: https://www.mackelab.org/people/
+    arxiv_categories: [stat.ML, cs.LG, q-bio.NC]
+
+  - name: "Tübingen — Bethge Lab"
+    people_url: https://bethgelab.org/people/
+    arxiv_categories: [cs.CV, cs.LG, q-bio.NC]
+
+  - name: "Forschungszentrum Jülich — INM-6 / IAS-6 (Computational Systems Neuroscience)"
+    people_url: https://www.fz-juelich.de/en/inm/inm-6
+    arxiv_categories: [q-bio.NC, cs.NE]
+
+  # ─── Computational Biology ───────────────────────────────────────────────
+
+  - name: "EMBL Heidelberg — Bork Group"
+    people_url: https://www.bork.embl.de/people/people.html
+    arxiv_categories: [q-bio.GN, q-bio.QM, q-bio.PE]
+
+  - name: "Wellcome Sanger Institute — Marioni Group (Cellular Genomics)"
+    people_url: https://www.sanger.ac.uk/group/marioni-group/
+    arxiv_categories: [q-bio.GN, q-bio.QM, stat.AP]
+
+  # ─── Neuromorphic Hardware ───────────────────────────────────────────────
+
+  - name: "Heidelberg University — Electronic Vision(s) Group (Neuromorphic)"
+    people_url: http://www.kip.uni-heidelberg.de/vision/people/
+    arxiv_categories: [cs.NE, cs.AR, q-bio.NC]
+
+  # ─── Quantum ─────────────────────────────────────────────────────────────
+
+  - name: "TU Delft — QuTech Hanson Lab"
+    people_url: https://qutech.nl/lab/hanson-lab/hanson-lab-people/
+    arxiv_categories: [quant-ph, cond-mat.mes-hall]

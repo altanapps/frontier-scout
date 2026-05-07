@@ -76,34 +76,64 @@ def roster(config_path: Path, db_path: Path) -> None:
 @click.option("--db-path", default="frontier.db",
               type=click.Path(exists=True, path_type=Path))
 @click.option("--since", default="7d", help="Lookback window, e.g. 7d, 24h.")
-def papers(config_path: Path, db_path: Path, since: str) -> None:
-    """Fetch new arXiv papers for everyone in the roster."""
+@click.option("--max-results", default=2000, type=int,
+              help="Cap papers fetched per lab category bundle. Higher = wider lookback covered.")
+def papers(config_path: Path, db_path: Path, since: str, max_results: int) -> None:
+    """Fetch new arXiv papers per lab. One query per lab; match authors client-side."""
     cutoff = _parse_since(since)
-    labs = {lab.name: lab for lab in config.load(config_path)}
+    labs = config.load(config_path)
 
     with db.connect(db_path) as con:
-        roster_rows = con.execute("SELECT lab, name FROM people").fetchall()
-        click.echo(f"Searching arXiv for {len(roster_rows)} researchers since {cutoff:%Y-%m-%d}.")
-        for r in roster_rows:
-            lab = labs.get(r["lab"])
-            cats = lab.arxiv_categories if lab else []
+        roster_by_lab: dict[str, list[str]] = {}
+        for r in con.execute("SELECT lab, name FROM people").fetchall():
+            roster_by_lab.setdefault(r["lab"], []).append(r["name"])
+
+        total_matched = 0
+        for lab in labs:
+            roster_names = roster_by_lab.get(lab.name, [])
+            if not roster_names:
+                continue
+            if not lab.arxiv_categories:
+                click.echo(f"→ {lab.name}: skipped (no arxiv_categories configured)")
+                continue
+            click.echo(
+                f"→ {lab.name} ({len(roster_names)} researchers, "
+                f"cats={','.join(lab.arxiv_categories)})"
+            )
             try:
-                hits = arxiv_search.search_author(r["name"], cats, cutoff)
+                fetched = arxiv_search.search_categories(
+                    lab.arxiv_categories, cutoff, max_results=max_results,
+                )
             except Exception as e:
-                click.echo(f"  arxiv failed for {r['name']}: {e}", err=True)
+                click.echo(f"  arxiv failed: {e}", err=True)
                 continue
-            if not hits:
-                continue
-            for h in hits:
+
+            matched = 0
+            for paper in fetched:
+                hit_name = None
+                for author in paper["authors"]:
+                    for rn in roster_names:
+                        if arxiv_search.author_matches_roster(author, rn):
+                            hit_name = rn
+                            break
+                    if hit_name:
+                        break
+                if not hit_name:
+                    continue
                 con.execute(
                     """INSERT OR IGNORE INTO papers
                        (arxiv_id, title, authors, summary, published, pdf_url,
                         matched_person, matched_lab)
                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (h["arxiv_id"], h["title"], h["authors"], h["summary"],
-                     h["published"], h["pdf_url"], r["name"], r["lab"]),
+                    (paper["arxiv_id"], paper["title"],
+                     ", ".join(paper["authors"]),
+                     paper["summary"], paper["published"],
+                     paper["pdf_url"], hit_name, lab.name),
                 )
-            click.echo(f"  {r['name']}: +{len(hits)}")
+                matched += 1
+            click.echo(f"  fetched {len(fetched)} papers in window, matched {matched}")
+            total_matched += matched
+        click.echo(f"Done. {total_matched} matches across {len(labs)} labs.")
 
 
 @main.command()

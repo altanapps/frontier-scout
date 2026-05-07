@@ -5,10 +5,18 @@ from anthropic import Anthropic
 ROSTER_PROMPT = """\
 You are extracting a research-lab roster from a webpage.
 Return JSON with a single key "people", an array of objects with fields:
-- name (string, required)
+- name (string, required) — see normalization rules below
 - role (string, e.g. "Professor", "PhD Student", "Postdoc"; "" if unclear)
 - profile_url (string, absolute URL to the person's page; "" if not present)
 - research_area (string, short topic; "" if unclear)
+
+Name normalization (strict):
+- ALWAYS "First Last" order, never "Last, First". If the page shows
+  "Smith, John A.", output "John A. Smith".
+- NEVER include titles. Strip: Dr., Prof., Prof. Dr., PhD, Ph.D., M.Sc.,
+  MSc, B.Sc., MBA, MD. "Dr. Alessandro Crespi" → "Alessandro Crespi".
+- Keep accents and non-ASCII characters intact. "Justin Décaillet" stays.
+- If a person has only a single name listed (e.g. "ADMIN"), skip them.
 
 Only include current researchers (faculty, postdocs, PhD/Masters students).
 Skip support staff, alumni, and visitors unless explicitly current.

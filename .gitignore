@@ -16,3 +16,4 @@ build/
 *.db
 *.db-journal
 digest.md
+.DS_Store
