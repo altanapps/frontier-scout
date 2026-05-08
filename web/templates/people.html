@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}People — Meridian{% endblock %}
+{% block content %}
+
+<header class="mb-10 max-w-3xl">
+  <div class="label mb-3">Researchers</div>
+  <h1 class="display text-4xl md:text-5xl font-light text-paper">People you're tracking.</h1>
+  <form class="mt-8 flex gap-3 flex-wrap">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search name or research area" class="bg-transparent border border-[rgba(244,241,234,0.18)] px-4 py-2 text-sm text-paper flex-1 min-w-64 focus:outline-none focus:border-[rgba(244,241,234,0.55)] placeholder:text-dim" />
+    <select name="lab" class="bg-ink border border-[rgba(244,241,234,0.18)] px-3 py-2 text-sm text-paper focus:outline-none">
+      <option value="">All labs</option>
+      {% for l in labs %}<option value="{{ l }}" {% if l == current_lab %}selected{% endif %}>{{ l }}</option>{% endfor %}
+    </select>
+    <button class="btn-paper">Filter</button>
+  </form>
+</header>
+
+<div class="hair mb-6"></div>
+
+<div class="label mb-4">{{ people|length }} results</div>
+
+<ul class="divide-y divide-[rgba(244,241,234,0.08)]">
+{% for p in people %}
+  <li>
+    <a href="/people/{{ p.id }}" class="row block px-2 -mx-2 py-3 transition rounded">
+      <div class="flex items-baseline justify-between gap-4">
+        <div>
+          <span class="text-paper font-medium">{{ p.name }}</span>
+          <span class="meta normal-case tracking-normal ml-2">{{ p.role }}</span>
+        </div>
+        <div class="meta text-right">{{ p.lab }}</div>
+      </div>
+      <div class="meta mt-1 flex gap-4 normal-case tracking-normal">
+        {% if p.github_handle %}<span>gh:{{ p.github_handle }}</span>{% endif %}
+        {% if p.twitter_handle %}<span>@{{ p.twitter_handle }}</span>{% endif %}
+        {% if p.email %}<span>{{ p.email }}</span>{% endif %}
+        {% if p.research_area %}<span class="text-dim">· {{ p.research_area }}</span>{% endif %}
+      </div>
+    </a>
+  </li>
+{% endfor %}
+</ul>
+
+{% endblock %}

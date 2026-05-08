@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ lab_name }} — Meridian{% endblock %}
+{% block content %}
+
+<a href="/labs" class="label hover:text-paper transition inline-block mb-6">← Labs</a>
+
+<header class="mb-10 max-w-3xl">
+  <h1 class="display text-3xl md:text-4xl font-light text-paper leading-tight">{{ lab_name }}</h1>
+  <div class="meta normal-case tracking-normal mt-3 text-chalk">
+    {{ people|length }} researchers
+    <span class="text-dim mx-1">·</span>
+    {{ papers|length }} recent papers
+  </div>
+</header>
+
+<div class="hair mb-8"></div>
+
+<section class="mb-14">
+  <div class="label mb-5">Roster · {{ people|length }}</div>
+  <ul class="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+  {% for p in people %}
+    <li class="border-b border-[rgba(244,241,234,0.06)]">
+      <a href="/people/{{ p.id }}" class="row block py-2.5 px-2 -mx-2">
+        <div class="flex items-baseline justify-between gap-3">
+          <span class="text-paper">{{ p.name }}</span>
+          {% if p.role %}<span class="meta normal-case tracking-normal text-dim">{{ p.role }}</span>{% endif %}
+        </div>
+      </a>
+    </li>
+  {% endfor %}
+  </ul>
+</section>
+
+{% if papers %}
+<section>
+  <div class="label mb-5">Recent papers · {{ papers|length }}</div>
+  <ul class="space-y-6">
+  {% for p in papers %}
+    <li class="border-l border-[rgba(244,241,234,0.10)] pl-5">
+      <a href="/papers/{{ p.id }}" class="text-paper hover:underline decoration-dotted underline-offset-4 font-medium leading-snug block">{{ p.title }}</a>
+      <div class="meta mt-2 normal-case tracking-normal">
+        <span class="text-chalk">{{ p.matched_person }}</span>
+        <span class="text-dim mx-1">·</span>{{ p.published[:10] }}
+        <span class="text-dim mx-1">·</span>arxiv:{{ p.arxiv_id }}
+      </div>
+      {% if p.why_it_matters %}<div class="text-sm text-chalk mt-3 italic leading-relaxed">{{ p.why_it_matters }}</div>{% endif %}
+    </li>
+  {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% endblock %}

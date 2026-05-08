@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Meridian{% endblock %}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Mona Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            ink:   '#070708',
+            paper: '#f4f1ea',
+            chalk: '#cfc8b8',
+            dim:   '#7d7868',
+          },
+        },
+      },
+    }
+  </script>
+
+  <style>
+    html, body { background: #070708; }
+    body {
+      color: #e8e5dc;
+      font-feature-settings: "ss01","cv11","tnum";
+      letter-spacing: -0.005em;
+    }
+    ::selection { background: #f4f1ea; color: #070708; }
+
+    .display { letter-spacing: -0.025em; line-height: 0.96 !important; }
+    .hair    { height: 1px; background: linear-gradient(to right, transparent, rgba(244,241,234,0.12), transparent); }
+    .label   { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: #7d7868; }
+    .meta    { font-family: "JetBrains Mono", monospace; font-size: 11px; color: #7d7868; letter-spacing: 0.04em; }
+
+    .btn-paper {
+      display: inline-block;
+      background: #f4f1ea; color: #070708;
+      padding: 6px 12px; font-size: 11px;
+      font-family: "JetBrains Mono", monospace;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      border: 1px solid #f4f1ea;
+      transition: background 160ms;
+    }
+    .btn-paper:hover { background: #fff; }
+
+    .btn-ghost {
+      display: inline-block;
+      background: transparent; color: #cfc8b8;
+      padding: 6px 12px; font-size: 11px;
+      font-family: "JetBrains Mono", monospace;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      border: 1px solid rgba(244,241,234,0.18);
+      transition: border-color 160ms, color 160ms;
+    }
+    .btn-ghost:hover { border-color: rgba(244,241,234,0.55); color: #f4f1ea; }
+
+    .pill-active {
+      background: #f4f1ea; color: #070708;
+      padding: 5px 12px; border-radius: 9999px;
+      font-family: "JetBrains Mono", monospace; font-size: 11px;
+      letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .pill-soon {
+      background: transparent; color: #7d7868;
+      padding: 5px 12px; border-radius: 9999px;
+      border: 1px solid rgba(244,241,234,0.10);
+      font-family: "JetBrains Mono", monospace; font-size: 11px;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      cursor: not-allowed;
+    }
+
+    a.row:hover { background: rgba(244,241,234,0.03); }
+  </style>
+</head>
+<body class="font-sans antialiased min-h-screen">
+
+  <nav class="border-b border-[rgba(244,241,234,0.10)]">
+    <div class="max-w-[1400px] mx-auto px-6 md:px-10 py-5 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-3 hover:opacity-80 transition">
+        <svg width="14" height="14" viewBox="0 0 14 14">
+          <circle cx="7" cy="7" r="2" fill="#f4f1ea"/>
+          <circle cx="7" cy="7" r="6" fill="none" stroke="#f4f1ea" stroke-width="0.5" stroke-dasharray="1 2"/>
+        </svg>
+        <span class="font-mono text-[12px] tracking-[0.18em] uppercase text-paper">Meridian</span>
+      </a>
+      <div class="flex items-center gap-6 md:gap-8 text-[12px] font-mono uppercase tracking-[0.16em]">
+        <a href="/" class="text-chalk hover:text-paper transition">Today</a>
+        <a href="/papers" class="text-chalk hover:text-paper transition">Papers</a>
+        <a href="/labs" class="text-chalk hover:text-paper transition">Labs</a>
+        <a href="/people" class="text-chalk hover:text-paper transition">People</a>
+        <a href="http://localhost:8000/" class="text-dim hover:text-paper transition">About ↗</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-[1400px] mx-auto px-6 md:px-10 py-10">
+    {% block content %}{% endblock %}
+  </main>
+
+</body>
+</html>

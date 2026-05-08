@@ -1,241 +1,867 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>frontier-scout — daily intel on European deep-tech research labs</title>
-  <meta name="description" content="Track 887 researchers across 32 European deep-tech labs. Daily arXiv digest, GitHub signals, paper-anchored outreach drafts. Open source, MIT, under $1/month." />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Meridian · every star in European deep-tech research</title>
+<meta name="description" content="A daily digest of every new arXiv paper, GitHub signal, and outreach draft from 32 European deep-tech research labs. Open source. Under $1/month." />
+<meta property="og:title" content="Meridian" />
+<meta property="og:description" content="Every star in European deep-tech research. Daily digest, open source, under $1/month." />
 
-  <meta property="og:title" content="frontier-scout — daily intel on European deep-tech labs" />
-  <meta property="og:description" content="Track 887 researchers across 32 EU/UK research labs. Daily arXiv digest with one-line summaries. Built for VCs scouting deep-tech." />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
-          },
-        },
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['"Mona Sans"', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
-    }
-  </script>
+      colors: {
+        ink:   '#070708',
+        paper: '#f4f1ea',
+        chalk: '#cfc8b8',
+        dim:   '#7d7868',
+      },
+    },
+  },
+}
+</script>
+
+<style>
+  html, body { background: #070708; }
+  body {
+    color: #e8e5dc;
+    font-feature-settings: "ss01","cv11";
+    letter-spacing: -0.005em;
+  }
+  ::selection { background: #f4f1ea; color: #070708; }
+
+  /* Tighter optical sizing on big display text */
+  .display { letter-spacing: -0.025em; line-height: 0.96 !important; }
+
+  /* Subtle vignette under the constellation */
+  .map-vignette {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 50%, transparent 30%, rgba(7,7,8,0.85) 95%),
+      radial-gradient(ellipse 120% 90% at 50% 50%, rgba(244,241,234,0.015), transparent 70%);
+  }
+
+  /* Stars + edges */
+  .star {
+    fill: #f4f1ea;
+    cursor: pointer;
+    transition: filter 200ms ease;
+  }
+  .star:hover { filter: drop-shadow(0 0 6px rgba(244,241,234,0.9)); }
+  .star-halo { fill: rgba(244,241,234,0.06); pointer-events: none; }
+  .edge { stroke: #f4f1ea; stroke-width: 0.5; fill: none; }
+
+  .grid-line { stroke: rgba(244,241,234,0.04); stroke-width: 0.5; }
+  .country-fill   { fill: rgba(244,241,234,0.028); }
+  .country-stroke { fill: none; stroke: rgba(244,241,234,0.28); stroke-width: 0.5; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+  .country-tracked .country-fill-path { fill: rgba(244,241,234,0.06); }
+  .crosshair { stroke: rgba(244,241,234,0.25); stroke-width: 0.5; }
+
+  /* Tooltip */
+  .tip {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(7,7,8,0.92);
+    border: 1px solid rgba(244,241,234,0.18);
+    color: #f4f1ea;
+    padding: 10px 12px;
+    font-size: 11px;
+    line-height: 1.5;
+    transform: translate(12px, -50%);
+    opacity: 0;
+    transition: opacity 160ms ease;
+    backdrop-filter: blur(6px);
+    max-width: 240px;
+    z-index: 10;
+  }
+  .tip.show { opacity: 1; }
+  .tip .tip-cat {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #7d7868;
+    margin-bottom: 4px;
+  }
+  .tip .tip-name { font-weight: 500; letter-spacing: -0.01em; }
+  .tip .tip-meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    color: #cfc8b8;
+    margin-top: 6px;
+  }
+
+  /* Click-pinned info panel — anchored bottom-left of hero */
+  .info-card {
+    position: absolute;
+    left: 24px;
+    bottom: 24px;
+    width: 360px;
+    max-width: calc(100% - 48px);
+    background: rgba(7,7,8,0.88);
+    border: 1px solid rgba(244,241,234,0.22);
+    backdrop-filter: blur(8px);
+    padding: 18px 20px 16px;
+    color: #f4f1ea;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(6px);
+    transition: opacity 220ms ease, transform 220ms ease;
+    z-index: 11;
+  }
+  .info-card.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .info-card .ic-cat {
+    font-family: "JetBrains Mono", monospace; font-size: 9px;
+    letter-spacing: 0.22em; text-transform: uppercase; color: #7d7868;
+    margin-bottom: 8px;
+  }
+  .info-card .ic-name { font-size: 18px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.25; }
+  .info-card .ic-meta {
+    font-family: "JetBrains Mono", monospace; font-size: 10px;
+    color: #cfc8b8; margin-top: 8px; letter-spacing: 0.04em;
+  }
+  .info-card .ic-papers { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(244,241,234,0.12); }
+  .info-card .ic-paper { font-family: "JetBrains Mono", monospace; font-size: 11px; line-height: 1.55; color: #e8e2d2; margin-bottom: 8px; }
+  .info-card .ic-paper:last-child { margin-bottom: 0; }
+  .info-card .ic-paper .ax { color: #7d7868; margin-right: 8px; }
+  .info-card .ic-close {
+    position: absolute; top: 10px; right: 12px;
+    font-family: "JetBrains Mono", monospace; font-size: 11px;
+    color: #7d7868; cursor: pointer; padding: 4px; user-select: none;
+  }
+  .info-card .ic-close:hover { color: #f4f1ea; }
+
+
+
+  /* Section dividers */
+  .rule { border-color: rgba(244,241,234,0.08); }
+
+  /* Subtle hairline above sections */
+  .hair { height: 1px; background: linear-gradient(to right, transparent, rgba(244,241,234,0.12), transparent); }
+
+  /* Number ticker */
+  .num-disp { font-feature-settings: "tnum","ss01"; }
+
+  /* Hide map interactions on small screens */
+  @media (max-width: 767px) {
+    .interactive-only { pointer-events: none; }
+    .map-mobile-hint { display: block !important; }
+  }
+
+  /* Form */
+  input.field, button.field {
+    background: transparent;
+    border: 1px solid rgba(244,241,234,0.18);
+    color: #f4f1ea;
+    padding: 14px 16px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 160ms;
+  }
+  input.field::placeholder { color: #7d7868; }
+  input.field:focus { outline: none; border-color: rgba(244,241,234,0.6); }
+  button.field { background: #f4f1ea; color: #070708; cursor: pointer; border-color: #f4f1ea; }
+  button.field:hover { background: #fff; }
+
+  /* Reduce motion respect */
+  @media (prefers-reduced-motion: reduce) {
+    .star, .edge { animation: none !important; transition: none !important; }
+  }
+</style>
 </head>
-<body class="bg-neutral-950 text-neutral-100 font-sans antialiased">
+<body class="font-sans antialiased">
 
-  <nav class="border-b border-neutral-900">
-    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-      <div class="font-mono text-sm">frontier-scout</div>
-      <div class="flex items-center gap-6 text-sm">
-        <a href="#demo" class="text-neutral-400 hover:text-white transition">Demo</a>
-        <a href="https://github.com/altanapps/frontier-scout" class="text-neutral-400 hover:text-white transition">GitHub</a>
-      </div>
+<!-- ─────────────────────────  NAV  ───────────────────────── -->
+<nav class="absolute top-0 left-0 right-0 z-20">
+  <div class="max-w-[1400px] mx-auto px-6 md:px-10 py-6 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <svg width="14" height="14" viewBox="0 0 14 14" class="opacity-90">
+        <circle cx="7" cy="7" r="2" fill="#f4f1ea"/>
+        <circle cx="7" cy="7" r="6" fill="none" stroke="#f4f1ea" stroke-width="0.5" stroke-dasharray="1 2"/>
+      </svg>
+      <span class="font-mono text-[12px] tracking-[0.18em] uppercase text-paper">Meridian</span>
     </div>
-  </nav>
+    <div class="flex items-center gap-6 md:gap-8 text-[12px] font-mono uppercase tracking-[0.16em]">
+      <a href="#digest" class="text-chalk hover:text-paper transition">Digest</a>
+      <a href="#labs" class="text-chalk hover:text-paper transition">Labs</a>
+      <a href="http://127.0.0.1:5050/" class="text-paper hover:opacity-80 transition">Dashboard ↗</a>
+      <a href="https://github.com/altanapps/frontier-scout" class="text-chalk hover:text-paper transition">GitHub</a>
+    </div>
+  </div>
+</nav>
 
-  <section class="max-w-4xl mx-auto px-6 pt-24 pb-16 text-center">
-    <h1 class="text-5xl md:text-7xl font-semibold tracking-tight leading-[1.05]">
-      Daily intel on<br/>
-      European deep-tech labs.
-    </h1>
-    <p class="mt-8 text-lg md:text-xl text-neutral-400 max-w-2xl mx-auto leading-relaxed">
-      Track <span class="text-white">887 researchers</span> across <span class="text-white">32 labs</span> in <span class="text-white">12 countries</span>. Spot new papers, GitHub signals, and outreach openings — before they show up on Twitter.
-    </p>
-    <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-      <a href="#waitlist" class="bg-white text-black px-6 py-3 rounded font-medium hover:bg-neutral-200 transition w-full sm:w-auto">
-        Get the daily digest →
-      </a>
-      <a href="https://github.com/altanapps/frontier-scout" class="border border-neutral-700 px-6 py-3 rounded font-medium hover:border-neutral-500 transition w-full sm:w-auto">
-        ⭐ Star on GitHub
-      </a>
-    </div>
-  </section>
+<!-- ─────────────────────────  HERO MAP  ───────────────────────── -->
+<header class="relative w-full" style="height: 100vh; min-height: 720px;">
+  <div id="map-wrap" class="absolute inset-0 map-vignette overflow-hidden">
 
-  <section class="max-w-6xl mx-auto px-6 py-16 grid grid-cols-2 md:grid-cols-4 gap-8 text-center border-y border-neutral-900">
-    <div>
-      <div class="text-4xl font-semibold">32</div>
-      <div class="text-xs text-neutral-500 mt-2 uppercase tracking-widest">labs tracked</div>
-    </div>
-    <div>
-      <div class="text-4xl font-semibold">887</div>
-      <div class="text-xs text-neutral-500 mt-2 uppercase tracking-widest">researchers</div>
-    </div>
-    <div>
-      <div class="text-4xl font-semibold">12</div>
-      <div class="text-xs text-neutral-500 mt-2 uppercase tracking-widest">countries</div>
-    </div>
-    <div>
-      <div class="text-4xl font-semibold">&lt;$1</div>
-      <div class="text-xs text-neutral-500 mt-2 uppercase tracking-widest">per month</div>
-    </div>
-  </section>
+    <!-- The constellation -->
+    <svg id="constellation" viewBox="0 0 1000 560" preserveAspectRatio="xMidYMid slice"
+         class="w-full h-full block select-none" aria-label="Constellation map of 32 European deep-tech research labs">
+      <defs>
+        <radialGradient id="starGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#f4f1ea" stop-opacity="0.95"/>
+          <stop offset="60%" stop-color="#f4f1ea" stop-opacity="0.4"/>
+          <stop offset="100%" stop-color="#f4f1ea" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
 
-  <section class="max-w-6xl mx-auto px-6 py-24">
-    <h2 class="text-3xl md:text-4xl font-semibold mb-12 text-center">What you get every morning</h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-      <div>
-        <div class="font-mono text-xs text-neutral-500 mb-3">01 / PAPERS</div>
-        <h3 class="text-xl font-semibold mb-3">Every new arXiv paper, grouped by lab</h3>
-        <p class="text-neutral-400 leading-relaxed">
-          New preprints from every researcher you track. Each has a one-sentence "why it matters" written by Claude — concrete claim only, no hype.
+      <!-- Faint coordinate grid -->
+      <g id="grid"></g>
+
+      <!-- Real Europe outline · projected from world-atlas TopoJSON -->
+      <g id="geo-fill" class="country-fill"></g>
+      <g id="geo-stroke" class="country-stroke"></g>
+
+      <!-- Edges -->
+      <g id="edges"></g>
+
+      <!-- Stars -->
+      <g id="stars"></g>
+
+      <!-- Frame crosshairs -->
+      <g class="crosshair">
+        <line x1="20" y1="20" x2="40" y2="20"/><line x1="20" y1="20" x2="20" y2="40"/>
+        <line x1="980" y1="20" x2="960" y2="20"/><line x1="980" y1="20" x2="980" y2="40"/>
+        <line x1="20" y1="540" x2="40" y2="540"/><line x1="20" y1="540" x2="20" y2="520"/>
+        <line x1="980" y1="540" x2="960" y2="540"/><line x1="980" y1="540" x2="980" y2="520"/>
+      </g>
+    </svg>
+
+    <!-- Tooltip -->
+    <div id="tip" class="tip"></div>
+
+    <!-- Click-pinned info card -->
+    <div id="info-card" class="info-card" role="dialog" aria-live="polite"></div>
+
+
+
+    <!-- Mobile note (hidden on desktop) -->
+    <div class="map-mobile-hint absolute bottom-24 left-0 right-0 text-center font-mono text-[10px] tracking-[0.18em] uppercase text-dim hidden">
+      Pinch to zoom the constellation.
+    </div>
+
+    <!-- Caption -->
+    <div class="absolute bottom-0 left-0 right-0 pb-8 md:pb-12 px-6 md:px-10">
+      <div class="flex items-end justify-between gap-6">
+        <div class="font-mono text-[10px] md:text-[11px] tracking-[0.22em] uppercase text-dim hidden md:block max-w-[280px] leading-relaxed">
+          Hover to read a lab's metadata.<br/>Click a star for its three latest papers.
+        </div>
+        <p class="text-paper text-[18px] md:text-[26px] font-medium tracking-[-0.02em] text-right ml-auto leading-[1.1] max-w-[520px]">
+          Every star in European<br/>deep-tech research.
         </p>
       </div>
-      <div>
-        <div class="font-mono text-xs text-neutral-500 mb-3">02 / SIGNALS</div>
-        <h3 class="text-xl font-semibold mb-3">GitHub events from researchers you're watching</h3>
-        <p class="text-neutral-400 leading-relaxed">
-          Catches when someone pushes a new repo, makes one public, or tags a release. Early signal that a postdoc is spinning something up.
+    </div>
+  </div>
+</header>
+
+<!-- ─────────────────────────  STATS  ───────────────────────── -->
+<section class="border-t rule">
+  <div class="max-w-[1400px] mx-auto px-6 md:px-10 py-20 grid grid-cols-2 md:grid-cols-4 gap-y-12 md:gap-y-0 md:divide-x divide-paper/10">
+    <div class="md:px-10">
+      <div class="num-disp text-5xl md:text-6xl font-light text-paper display">32</div>
+      <div class="mt-4 font-mono text-[10px] tracking-[0.22em] uppercase text-dim">Labs tracked</div>
+    </div>
+    <div class="md:px-10">
+      <div class="num-disp text-5xl md:text-6xl font-light text-paper display">887</div>
+      <div class="mt-4 font-mono text-[10px] tracking-[0.22em] uppercase text-dim">Researchers</div>
+    </div>
+    <div class="md:px-10">
+      <div class="num-disp text-5xl md:text-6xl font-light text-paper display">12</div>
+      <div class="mt-4 font-mono text-[10px] tracking-[0.22em] uppercase text-dim">Countries</div>
+    </div>
+    <div class="md:px-10">
+      <div class="num-disp text-5xl md:text-6xl font-light text-paper display">&lt;$1</div>
+      <div class="mt-4 font-mono text-[10px] tracking-[0.22em] uppercase text-dim">Per month</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────  THREE FEATURES  ───────────────────────── -->
+<section class="border-t rule">
+  <div class="max-w-[1400px] mx-auto px-6 md:px-10 py-24 md:py-32">
+    <div class="grid grid-cols-12 gap-x-6 gap-y-16">
+      <div class="col-span-12 md:col-span-3">
+        <div class="font-mono text-[10px] tracking-[0.22em] uppercase text-dim">What lands<br/>in your inbox</div>
+      </div>
+
+      <div class="col-span-12 md:col-span-9 grid grid-cols-1 md:grid-cols-3 gap-x-10 gap-y-12">
+        <article>
+          <div class="font-mono text-[10px] tracking-[0.22em] uppercase text-dim mb-6">01 · Papers</div>
+          <h3 class="text-2xl md:text-[28px] text-paper leading-[1.1] tracking-[-0.015em] mb-5">Every new arXiv paper, grouped by lab.</h3>
+          <p class="text-chalk text-[15px] leading-[1.7]">
+            Every new preprint from every researcher you watch. Each one carries a one-sentence summary of the actual claim. No abstracts copied verbatim, no marketing adjectives.
+          </p>
+        </article>
+        <article>
+          <div class="font-mono text-[10px] tracking-[0.22em] uppercase text-dim mb-6">02 · Signals</div>
+          <h3 class="text-2xl md:text-[28px] text-paper leading-[1.1] tracking-[-0.015em] mb-5">GitHub events from researchers you're tracking.</h3>
+          <p class="text-chalk text-[15px] leading-[1.7]">
+            New repos, repos newly made public, tagged releases. Often the first visible trace that a postdoc is building something a year before the paper.
+          </p>
+        </article>
+        <article>
+          <div class="font-mono text-[10px] tracking-[0.22em] uppercase text-dim mb-6">03 · Drafts</div>
+          <h3 class="text-2xl md:text-[28px] text-paper leading-[1.1] tracking-[-0.015em] mb-5">Outreach emails anchored on a real claim.</h3>
+          <p class="text-chalk text-[15px] leading-[1.7]">
+            Paste an arXiv ID, get a four-sentence email that quotes the actual result. One technical question, one sentence about you. The author can tell you read it.
+          </p>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────  DIGEST  ───────────────────────── -->
+<section id="digest" class="border-t rule">
+  <div class="max-w-[1400px] mx-auto px-6 md:px-10 py-24 md:py-32">
+    <div class="grid grid-cols-12 gap-x-6 gap-y-12">
+      <div class="col-span-12 md:col-span-3">
+        <div class="font-mono text-[10px] tracking-[0.22em] uppercase text-dim mb-3">A real digest</div>
+        <h2 class="text-3xl md:text-[40px] text-paper display">Yesterday's<br/>findings.</h2>
+        <p class="mt-6 text-chalk text-[14px] leading-[1.65] max-w-xs">
+Pulled from arXiv at 06:00 CET. In your inbox by 06:02. Sample below is a single morning across EPFL BioRobotics, Imperial Personal Robotics, Oxford Robotics Institute.
         </p>
       </div>
-      <div>
-        <div class="font-mono text-xs text-neutral-500 mb-3">03 / DRAFTS</div>
-        <h3 class="text-xl font-semibold mb-3">Outreach emails anchored on real papers</h3>
-        <p class="text-neutral-400 leading-relaxed">
-          Paste an arXiv ID, get a 4-sentence email referencing a specific claim from the abstract. Reads like you actually read the paper. Because you did.
+
+      <div class="col-span-12 md:col-span-9">
+        <div class="border rule">
+          <div class="flex items-center justify-between border-b rule px-5 md:px-7 py-3 font-mono text-[11px] text-dim">
+            <span>Meridian digest</span>
+            <span>2026-05-07 · 06:02 CET</span>
+          </div>
+          <div class="px-5 md:px-7 py-7 font-mono text-[12.5px] md:text-[13px] leading-[1.85] overflow-x-auto">
+
+            <div class="text-paper">## Papers (6 across 3 labs)</div>
+
+            <div class="mt-7 text-dim">### EPFL · BioRobotics Laboratory</div>
+            <div class="mt-2 text-paper">Learning Whole-Body Control for a Salamander Robot</div>
+            <div class="text-chalk">· Qiyuan Fu &nbsp;·&nbsp; 2026-03-17</div>
+            <div class="text-dim">arxiv.org/abs/2603.16683v1</div>
+            <div class="mt-2 text-paper/90">→ Learning-based joint controllers let salamander robots coordinate amphibious locomotion without hand-coded CPGs, with sim-to-real transfer validated on hardware.</div>
+
+            <div class="mt-7 text-dim">### Imperial College · Personal Robotics Lab</div>
+            <div class="mt-2 text-paper">ViTac-Tracing: Visual-Tactile Imitation Learning of Deformable Object Tracing</div>
+            <div class="text-chalk">· Yiannis Demiris &nbsp;·&nbsp; 2026-03-19</div>
+            <div class="text-dim">arxiv.org/abs/2603.18784v1</div>
+            <div class="mt-2 text-paper/90">→ Unified visual-tactile imitation learning generalises deformable object manipulation across categories without object-specific models.</div>
+
+            <div class="mt-7 text-dim">### Oxford Robotics Institute</div>
+            <div class="mt-2 text-paper">Sim-to-Real Transfer for Muscle-Actuated Robots via Generalized Actuator Networks</div>
+            <div class="text-chalk">· Ingmar Posner &nbsp;·&nbsp; 2026-04-10</div>
+            <div class="text-dim">arxiv.org/abs/2604.09487v1</div>
+            <div class="mt-2 text-paper/90">→ Neural-network actuator models enable sim-to-real transfer for tendon-driven robots without torque sensors, unlocking deployment of muscle-actuated systems.</div>
+
+            <div class="mt-10 text-dim">## Signals (2)</div>
+            <div class="mt-2 text-paper/90">→ posner-lab/gean-pytorch · made public · 2026-05-07 04:18 UTC</div>
+            <div class="text-paper/90">→ epfl-biorob/salamander-rl · v0.3.0 tagged · 2026-05-07 02:51 UTC</div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────  COUNTRY LIST  ───────────────────────── -->
+<section id="labs" class="border-t rule">
+  <div class="max-w-[1400px] mx-auto px-6 md:px-10 py-24 md:py-32">
+    <div class="grid grid-cols-12 gap-x-6 gap-y-12">
+      <div class="col-span-12 md:col-span-3">
+        <div class="font-mono text-[10px] tracking-[0.22em] uppercase text-dim mb-3">The roster</div>
+        <h2 class="text-3xl md:text-[40px] text-paper display">32 labs.<br/>12 countries.</h2>
+        <p class="mt-6 text-chalk text-[14px] leading-[1.65] max-w-xs">
+          Every entry has a public PhD roster and recent arXiv activity. Suggest a missing lab on
+          <a href="https://github.com/altanapps/frontier-scout/issues" class="underline decoration-dotted underline-offset-4 hover:text-paper">GitHub</a>.
         </p>
       </div>
-    </div>
-  </section>
 
-  <section id="demo" class="max-w-4xl mx-auto px-6 py-24">
-    <h2 class="text-3xl md:text-4xl font-semibold mb-3 text-center">A real digest</h2>
-    <p class="text-neutral-400 text-center mb-12">From a 60-day run across EPFL BioRobotics, Imperial Personal Robotics, and Oxford Robotics Institute.</p>
-
-    <div class="bg-neutral-900 border border-neutral-800 rounded-lg p-8 font-mono text-sm overflow-x-auto leading-relaxed">
-      <div class="text-white mb-4"># Frontier Scout — Digest 2026-05-07</div>
-      <div class="text-white mb-2">## Papers (6 across 3 labs)</div>
-      <br/>
-      <div class="text-neutral-500 mb-2">### EPFL — BioRobotics Laboratory</div>
-      <div class="text-neutral-300">- <span class="text-white">Learning Whole-Body Control for a Salamander Robot</span> — <em>Qiyuan Fu</em> (2026-03-17)</div>
-      <div class="text-neutral-500 ml-4">https://arxiv.org/abs/2603.16683v1</div>
-      <div class="text-emerald-400 ml-4 mb-6">→ Learning-based joint controllers enable salamander robots to coordinate amphibious locomotion without hand-coded CPGs, with sim-to-real transfer validated on real hardware.</div>
-
-      <div class="text-neutral-500 mb-2">### Imperial College — Personal Robotics Lab</div>
-      <div class="text-neutral-300">- <span class="text-white">ViTac-Tracing: Visual-Tactile Imitation Learning of Deformable Object Tracing</span> — <em>Yiannis Demiris</em> (2026-03-19)</div>
-      <div class="text-neutral-500 ml-4">https://arxiv.org/abs/2603.18784v1</div>
-      <div class="text-emerald-400 ml-4 mb-6">→ Unified visual-tactile imitation learning enables generalized deformable object manipulation across categories without object-specific models.</div>
-
-      <div class="text-neutral-500 mb-2">### Oxford Robotics Institute</div>
-      <div class="text-neutral-300">- <span class="text-white">Sim-to-Real Transfer for Muscle-Actuated Robots via Generalized Actuator Networks</span> — <em>Ingmar Posner</em> (2026-04-10)</div>
-      <div class="text-neutral-500 ml-4">https://arxiv.org/abs/2604.09487v1</div>
-      <div class="text-emerald-400 ml-4 mb-2">→ Neural network actuator models enable sim-to-real transfer for tendon-driven robots without torque sensors, unlocking practical deployment of muscle-actuated systems.</div>
-    </div>
-  </section>
-
-  <section class="max-w-4xl mx-auto px-6 py-24">
-    <h2 class="text-3xl md:text-4xl font-semibold mb-3 text-center">Plus a draft email per paper</h2>
-    <p class="text-neutral-400 text-center mb-12">Specific. Technical. No buzzwords. Generated in 2 seconds.</p>
-
-    <div class="bg-neutral-900 border border-neutral-800 rounded-lg p-8 font-mono text-sm leading-relaxed text-neutral-300">
-      <div class="text-white">Hi Ingmar,</div><br/>
-      I read your GeAN paper and got stuck on one thing: you're learning the actuator model directly from joint trajectories without torque feedback, but tendon-driven systems have that inherent hysteresis you mention. How does the network handle the fact that the same joint position can be reached with different internal tensions depending on the trajectory history? I'm curious whether you're implicitly learning a state-dependent model or if there's something about the RL policy training that makes hysteresis less of a problem than classical control would suggest.
-      <br/><br/>
-      I'm an investor at MoreMarkets and spent a few years building infrastructure at NEAR before moving into frontier tech. Would be great to grab 15 minutes and hear what you're seeing as the real bottlenecks for deploying these systems beyond the lab.
-      <br/><br/>
-      Best,<br/>
-      <span class="text-neutral-600">[Sender]</span>
-    </div>
-
-    <div class="text-center mt-6 text-sm text-neutral-500">
-      Generated by <code class="font-mono text-neutral-400">frontier-scout draft 2604.09487v1</code>
-    </div>
-  </section>
-
-  <section class="max-w-6xl mx-auto px-6 py-24 border-y border-neutral-900">
-    <h2 class="text-3xl md:text-4xl font-semibold mb-12 text-center">The lab map</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
-      <div class="space-y-4">
-        <div class="flex items-baseline justify-between border-b border-neutral-900 pb-3">
-          <div><span class="font-semibold">United Kingdom</span> <span class="text-neutral-500">— Imperial, Oxford, Cambridge, UCL Gatsby (where DeepMind started), Edinburgh</span></div>
-          <div class="font-mono text-neutral-500">15</div>
-        </div>
-        <div class="flex items-baseline justify-between border-b border-neutral-900 pb-3">
-          <div><span class="font-semibold">Germany</span> <span class="text-neutral-500">— TUM, Tübingen ×4, Heidelberg ×3, Bonn ×2</span></div>
-          <div class="font-mono text-neutral-500">13</div>
-        </div>
-        <div class="flex items-baseline justify-between border-b border-neutral-900 pb-3">
-          <div><span class="font-semibold">Switzerland</span> <span class="text-neutral-500">— ETH Zurich ×4, EPFL ×3</span></div>
-          <div class="font-mono text-neutral-500">7</div>
-        </div>
-        <div class="flex items-baseline justify-between border-b border-neutral-900 pb-3">
-          <div><span class="font-semibold">France</span> <span class="text-neutral-500">— INRIA project-teams (Paris, Grenoble ×2, Lille, Rennes, Bordeaux)</span></div>
-          <div class="font-mono text-neutral-500">7</div>
-        </div>
-      </div>
-      <div class="space-y-4">
-        <div class="flex items-baseline justify-between border-b border-neutral-900 pb-3">
-          <div><span class="font-semibold">Italy</span> <span class="text-neutral-500">— Polimi ×2, Sapienza, Pisa, Naples</span></div>
-          <div class="font-mono text-neutral-500">5</div>
-        </div>
-        <div class="flex items-baseline justify-between border-b border-neutral-900 pb-3">
-          <div><span class="font-semibold">Netherlands</span> <span class="text-neutral-500">— TU Delft ×2, Twente</span></div>
-          <div class="font-mono text-neutral-500">3</div>
-        </div>
-        <div class="flex items-baseline justify-between border-b border-neutral-900 pb-3">
-          <div><span class="font-semibold">Belgium / Finland</span> <span class="text-neutral-500">— KU Leuven, Aalto ×2</span></div>
-          <div class="font-mono text-neutral-500">4</div>
-        </div>
-        <div class="flex items-baseline justify-between border-b border-neutral-900 pb-3">
-          <div><span class="font-semibold">Sweden / Spain / Czechia / Estonia</span> <span class="text-neutral-500">— KTH, Carlos III, CTU Prague, Tartu</span></div>
-          <div class="font-mono text-neutral-500">4</div>
+      <div class="col-span-12 md:col-span-9">
+        <div id="country-list" class="grid grid-cols-1 md:grid-cols-2 gap-x-12">
+          <!-- filled by JS -->
         </div>
       </div>
     </div>
-    <p class="text-center text-neutral-500 text-sm mt-12">
-      All have public PhD rosters and recent arXiv papers. Suggest a missing lab on
-      <a href="https://github.com/altanapps/frontier-scout/issues" class="underline hover:text-white">GitHub</a>.
-    </p>
-  </section>
+  </div>
+</section>
 
-  <section id="waitlist" class="max-w-2xl mx-auto px-6 py-24 text-center">
-    <h2 class="text-4xl md:text-5xl font-semibold mb-4">Get tomorrow's digest.</h2>
-    <p class="text-neutral-400 mb-12 text-lg">
-      Daily intel on every research lab worth watching. Free during beta.
-    </p>
+<!-- ─────────────────────────  WAITLIST  ───────────────────────── -->
+<section id="waitlist" class="border-t rule">
+  <div class="max-w-[1400px] mx-auto px-6 md:px-10 py-32 md:py-40">
+    <div class="max-w-2xl mx-auto text-center">
+      <div class="font-mono text-[10px] tracking-[0.22em] uppercase text-dim mb-8">Waitlist · free during beta</div>
+      <h2 class="text-4xl md:text-[64px] text-paper display tracking-[-0.03em]">Tomorrow's digest,<br/>in your inbox at 06:02.</h2>
+      <p class="mt-8 text-chalk text-[15px] leading-[1.7]">
+One email per weekday morning. Free during beta, capped at $1/month after. One unsubscribe link at the bottom of every digest, no funnel.
+      </p>
 
-    <!--
-      EMAIL CAPTURE — replace the form action with your own endpoint.
-      Cheapest options:
-        Formspree: https://formspree.io  (free 50/mo, paste form ID)
-        Tally:     https://tally.so       (free, embed snippet)
-        Plunk:     https://useplunk.com   (free 3K emails/mo, full control)
-      Or remove the form entirely and rely on the GitHub star CTA above.
-    -->
-    <form action="https://formspree.io/f/REPLACE_ME" method="POST" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-      <input
-        type="email"
-        name="email"
-        required
-        placeholder="email@firm.com"
-        class="flex-1 bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-white placeholder-neutral-600 focus:outline-none focus:border-neutral-600"
-      />
-      <button type="submit" class="bg-white text-black px-6 py-3 rounded font-medium hover:bg-neutral-200 transition whitespace-nowrap">
-        Join waitlist
-      </button>
-    </form>
+      <form action="https://formspree.io/f/REPLACE_ME" method="POST" class="mt-12 flex flex-col sm:flex-row gap-2 max-w-lg mx-auto">
+        <input type="email" name="email" required placeholder="email@firm.com" class="field flex-1" />
+        <button type="submit" class="field whitespace-nowrap font-medium">Join waitlist →</button>
+      </form>
 
-    <p class="text-xs text-neutral-600 mt-6">
-      Or <a href="https://github.com/altanapps/frontier-scout" class="underline hover:text-neutral-400">clone the CLI</a> and run it yourself.
-    </p>
-  </section>
-
-  <footer class="border-t border-neutral-900">
-    <div class="max-w-6xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between text-sm text-neutral-500 gap-4">
-      <div>© 2026 frontier-scout · MIT</div>
-      <div class="flex items-center gap-6">
-        <a href="https://github.com/altanapps/frontier-scout" class="hover:text-neutral-300 transition">GitHub</a>
-        <a href="https://twitter.com/altantutar" class="hover:text-neutral-300 transition">@altantutar</a>
-      </div>
+      <p class="mt-6 font-mono text-[11px] text-dim">
+        Already a user? <a href="http://127.0.0.1:5050/" class="underline decoration-dotted underline-offset-4 hover:text-paper">Open the dashboard ↗</a>
+        &nbsp;·&nbsp;
+        Or <a href="https://github.com/altanapps/frontier-scout" class="underline decoration-dotted underline-offset-4 hover:text-paper">clone the CLI</a>.
+      </p>
     </div>
-  </footer>
+  </div>
+</section>
 
+<!-- ─────────────────────────  FOOTER  ───────────────────────── -->
+<footer class="border-t rule">
+  <div class="max-w-[1400px] mx-auto px-6 md:px-10 py-10 flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-[11px] text-dim">
+    <div>© 2026 Meridian · MIT</div>
+    <div class="flex items-center gap-8">
+      <a href="https://github.com/altanapps/frontier-scout" class="hover:text-paper transition">GitHub</a>
+      <a href="https://twitter.com/altantutar" class="hover:text-paper transition">@altantutar</a>
+      <span>52.520°N · 13.405°E</span>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ─────────────────────────  DATA + CONSTELLATION  ───────────────────────── -->
+<script>
+/* Lab roster · real city lat/lon. Pixel positions computed by d3-geo Mercator. */
+const LABS = [
+  { id:"edi", name:"Edinburgh Centre for Robotics",          city:"Edinburgh", country:"United Kingdom", cat:"Robotics",        researchers:42, lat:55.95, lon:-3.19, jx:0,  jy:0 },
+  { id:"oxr", name:"Oxford Robotics Institute",              city:"Oxford",    country:"United Kingdom", cat:"Robotics",        researchers:38, lat:51.76, lon:-1.26, jx:-7, jy:-4 },
+  { id:"oat", name:"Oxford · OATML",                         city:"Oxford",    country:"United Kingdom", cat:"Foundational ML", researchers:21, lat:51.76, lon:-1.26, jx:7,  jy:4 },
+  { id:"cml", name:"Cambridge · Machine Learning Group",     city:"Cambridge", country:"United Kingdom", cat:"Foundational ML", researchers:34, lat:52.20, lon:0.12,  jx:-5, jy:-4 },
+  { id:"san", name:"Wellcome Sanger Institute · Marioni",    city:"Hinxton",   country:"United Kingdom", cat:"Comp. Biology",   researchers:28, lat:52.09, lon:0.20,  jx:8,  jy:5 },
+  { id:"imh", name:"Imperial · Hamlyn Centre",               city:"London",    country:"United Kingdom", cat:"Robotics",        researchers:31, lat:51.50, lon:-0.18, jx:-9, jy:-2 },
+  { id:"imp", name:"Imperial · Personal Robotics Lab",       city:"London",    country:"United Kingdom", cat:"Robotics",        researchers:18, lat:51.51, lon:-0.17, jx:0,  jy:8 },
+  { id:"ucg", name:"UCL · Gatsby Computational Neuroscience",city:"London",    country:"United Kingdom", cat:"Comp. Neuro",     researchers:25, lat:51.52, lon:-0.13, jx:9,  jy:-4 },
+  { id:"tud", name:"TU Delft · Cognitive Robotics",          city:"Delft",     country:"Netherlands",    cat:"Robotics",        researchers:33, lat:52.00, lon:4.36,  jx:-5, jy:-3 },
+  { id:"qut", name:"TU Delft · QuTech Hanson Lab",           city:"Delft",     country:"Netherlands",    cat:"Quantum",         researchers:24, lat:52.00, lon:4.36,  jx:6,  jy:4 },
+  { id:"klv", name:"KU Leuven · Robotics & ESAT-PSI",        city:"Leuven",    country:"Belgium",        cat:"Robotics / CV",   researchers:37, lat:50.88, lon:4.70,  jx:0,  jy:0 },
+  { id:"bre", name:"DFKI · Robotics Innovation Center",      city:"Bremen",    country:"Germany",        cat:"Robotics",        researchers:46, lat:53.07, lon:8.80,  jx:0,  jy:0 },
+  { id:"jul", name:"Forschungszentrum Jülich · INM-6",       city:"Jülich",    country:"Germany",        cat:"Comp. Neuro",     researchers:22, lat:50.92, lon:6.36,  jx:0,  jy:0 },
+  { id:"bon", name:"University of Bonn · Humanoid Robots",   city:"Bonn",      country:"Germany",        cat:"Robotics",        researchers:19, lat:50.74, lon:7.10,  jx:0,  jy:0 },
+  { id:"frb", name:"Freiburg · Robot Learning (Valada)",     city:"Freiburg",  country:"Germany",        cat:"Robotics / ML",   researchers:17, lat:47.99, lon:7.84,  jx:0,  jy:0 },
+  { id:"hd",  name:"Heidelberg · Computer Vision & Learning",city:"Heidelberg",country:"Germany",        cat:"Computer Vision", researchers:26, lat:49.40, lon:8.67,  jx:0,  jy:0 },
+  { id:"tue", name:"ELLIS Institute Tübingen",               city:"Tübingen",  country:"Germany",        cat:"Foundational ML", researchers:48, lat:48.52, lon:9.05,  jx:0,  jy:0 },
+  { id:"tum", name:"TUM · Munich Institute (MIRMI)",         city:"Munich",    country:"Germany",        cat:"Robotics",        researchers:52, lat:48.14, lon:11.58, jx:0,  jy:0 },
+  { id:"ctu", name:"CTU Prague · CIIRC IMPACT",              city:"Prague",    country:"Czechia",        cat:"CV / Robotics",   researchers:21, lat:50.08, lon:14.43, jx:0,  jy:0 },
+  { id:"sie", name:"INRIA Paris · SIERRA",                   city:"Paris",     country:"France",         cat:"Foundational ML", researchers:19, lat:48.85, lon:2.35,  jx:-7, jy:-3 },
+  { id:"wil", name:"INRIA / ENS · Willow",                   city:"Paris",     country:"France",         cat:"CV / Robotics",   researchers:23, lat:48.84, lon:2.34,  jx:7,  jy:5 },
+  { id:"def", name:"INRIA Lille · DEFROST (Soft Robotics)",  city:"Lille",     country:"France",         cat:"Soft Robotics",   researchers:14, lat:50.63, lon:3.06,  jx:0,  jy:0 },
+  { id:"chr", name:"INRIA Grenoble · CHROMA",                city:"Grenoble",  country:"France",         cat:"Robotics / MA",   researchers:18, lat:45.19, lon:5.72,  jx:0,  jy:0 },
+  { id:"rsl", name:"ETH Zurich · Robotic Systems Lab",       city:"Zürich",    country:"Switzerland",    cat:"Robotics",        researchers:44, lat:47.38, lon:8.55,  jx:-8, jy:-5 },
+  { id:"asl", name:"ETH Zurich · Autonomous Systems Lab",    city:"Zürich",    country:"Switzerland",    cat:"Robotics",        researchers:32, lat:47.38, lon:8.55,  jx:6,  jy:-3 },
+  { id:"eai", name:"ETH Zurich · ETH AI Center",             city:"Zürich",    country:"Switzerland",    cat:"Foundational ML", researchers:60, lat:47.38, lon:8.55,  jx:0,  jy:8 },
+  { id:"epf", name:"EPFL · BioRobotics Laboratory",          city:"Lausanne",  country:"Switzerland",    cat:"Robotics",        researchers:28, lat:46.52, lon:6.57,  jx:-5, jy:-3 },
+  { id:"cvl", name:"EPFL · Computer Vision Laboratory",      city:"Lausanne",  country:"Switzerland",    cat:"Computer Vision", researchers:30, lat:46.52, lon:6.57,  jx:5,  jy:5 },
+  { id:"pol", name:"Politecnico di Milano · AIRLab",         city:"Milan",     country:"Italy",          cat:"Robotics / AI",   researchers:24, lat:45.46, lon:9.19,  jx:0,  jy:0 },
+  { id:"sap", name:"Sapienza University of Rome · ALCOR",    city:"Rome",      country:"Italy",          cat:"CV / Robotics",   researchers:20, lat:41.90, lon:12.50, jx:0,  jy:0 },
+  { id:"kth", name:"KTH · Robotics, Perception and Learning",city:"Stockholm", country:"Sweden",         cat:"Robotics / CV",   researchers:36, lat:59.33, lon:18.07, jx:0,  jy:0 },
+  { id:"aal", name:"Aalto · Probabilistic ML & Robotics",    city:"Espoo",     country:"Finland",        cat:"ML / Robotics",   researchers:29, lat:60.18, lon:24.83, jx:0,  jy:0 },
+  { id:"trt", name:"University of Tartu · Autonomous Driving",city:"Tartu",    country:"Estonia",        cat:"Robotics / CV",   researchers:15, lat:58.38, lon:26.72, jx:0,  jy:0 },
+];
+
+/* Country list summary derived from LABS */
+const COUNTRY_BLURBS = {
+  "United Kingdom":"Imperial, Oxford, Cambridge, UCL Gatsby, Edinburgh, Sanger.",
+  "Germany":"TUM, Tübingen, Heidelberg, Bonn, Freiburg, Bremen, Jülich.",
+  "Switzerland":"ETH Zürich ×3, EPFL ×2.",
+  "France":"INRIA project-teams (Paris ×2, Lille, Grenoble).",
+  "Netherlands":"TU Delft Cognitive Robotics, TU Delft QuTech.",
+  "Italy":"Politecnico di Milano, Sapienza Rome.",
+  "Belgium":"KU Leuven robotics & ESAT-PSI.",
+  "Sweden":"KTH Robotics, Perception and Learning.",
+  "Finland":"Aalto Intelligent Robotics & PML.",
+  "Czechia":"CTU Prague · CIIRC IMPACT.",
+  "Estonia":"University of Tartu · Autonomous Driving Lab.",
+  "European Union":"" // unused
+};
+
+/* Latest 3 papers per lab (used for orbiting labels on click) */
+const PAPERS = {
+  edi: [{id:"2604.21130", t:"Robust legged locomotion under partial observability"},
+        {id:"2604.18211", t:"Reward shaping via large pretrained world models"},
+        {id:"2603.30984", t:"Inverse RL for surgical task understanding"}],
+  oxr: [{id:"2604.09487", t:"Sim-to-real for muscle-actuated robots (GeAN)"},
+        {id:"2604.04572", t:"Whole-body control with diffusion priors"},
+        {id:"2603.27851", t:"Place recognition under seasonal drift"}],
+  oat: [{id:"2604.16003", t:"Bayesian deep learning at production scale"},
+        {id:"2604.05521", t:"Active acquisition for medical imaging"},
+        {id:"2603.22910", t:"Calibration of foundation-model uncertainty"}],
+  cml: [{id:"2604.13888", t:"Stochastic processes for graph generation"},
+        {id:"2604.07710", t:"Implicit functions for 3D scene priors"},
+        {id:"2603.29014", t:"Variational inference under data shift"}],
+  san: [{id:"2604.10211", t:"Cross-tissue cellular embeddings at scale"},
+        {id:"2604.02998", t:"Bayesian alignment of single-cell atlases"},
+        {id:"2603.31144", t:"Reference mapping under batch effects"}],
+  imh: [{id:"2604.20007", t:"Soft-tissue tracking for robotic surgery"},
+        {id:"2604.05619", t:"Learned visuotactile servoing in vivo"},
+        {id:"2603.27122", t:"Cross-instrument calibration via NeRF"}],
+  imp: [{id:"2603.18784", t:"ViTac-Tracing: visual-tactile imitation"},
+        {id:"2604.09980", t:"Long-horizon assistance with goal models"},
+        {id:"2604.01277", t:"Affordance grounding from text demos"}],
+  ucg: [{id:"2604.18852", t:"Geometry of meta-learned exploration"},
+        {id:"2604.06203", t:"Predictive coding meets diffusion"},
+        {id:"2603.25517", t:"Hippocampal replay as latent inference"}],
+  tud: [{id:"2604.17441", t:"Whole-arm contact-rich manipulation"},
+        {id:"2604.08233", t:"Self-supervised tactile pretraining"},
+        {id:"2603.30551", t:"Risk-aware planning for AVs"}],
+  qut: [{id:"2604.16729", t:"Long-distance entanglement over fibre"},
+        {id:"2604.04802", t:"NV-centre control with deep RL"},
+        {id:"2603.28804", t:"Memory-enhanced quantum repeaters"}],
+  klv: [{id:"2604.19102", t:"Open-vocabulary segmentation in clutter"},
+        {id:"2604.07551", t:"Compliant assembly with model priors"},
+        {id:"2603.26991", t:"Stereo-event fusion for industrial AV"}],
+  bre: [{id:"2604.15003", t:"Underwater manipulation with adaptive grippers"},
+        {id:"2604.03874", t:"Walking on Mars analogue terrains"},
+        {id:"2603.29977", t:"Cable-driven exoskeleton control"}],
+  jul: [{id:"2604.20991", t:"Mean-field theories of cortical dynamics"},
+        {id:"2604.06672", t:"Spiking simulators on neuromorphic chips"},
+        {id:"2603.26184", t:"Local plasticity rules for online learning"}],
+  bon: [{id:"2604.18093", t:"Humanoid loco-manipulation under contact"},
+        {id:"2604.07003", t:"Bipedal whole-body MPC at 1kHz"},
+        {id:"2603.27801", t:"Self-collision avoidance with implicit fields"}],
+  frb: [{id:"2604.20554", t:"Object-centric pretraining for manipulation"},
+        {id:"2604.09014", t:"Scene-graph aware navigation policies"},
+        {id:"2603.30119", t:"Vision-language-action: a study of failures"}],
+  hd:  [{id:"2604.21822", t:"Posterior sampling for inverse rendering"},
+        {id:"2604.08311", t:"Calibration without ground truth"},
+        {id:"2603.31890", t:"Dense correspondence at gigapixel scale"}],
+  tue: [{id:"2604.22001", t:"Mechanistic interpretability of CoT"},
+        {id:"2604.10550", t:"Scaling laws for world models"},
+        {id:"2603.28771", t:"Contrastive priors and rare-event reasoning"}],
+  tum: [{id:"2604.18219", t:"Tactile-rich manipulation benchmarks"},
+        {id:"2604.07090", t:"Whole-body MPC for human-robot collaboration"},
+        {id:"2603.29665", t:"Safe RL with conformal certificates"}],
+  ctu: [{id:"2604.16110", t:"Robust 6-DoF pose with feature fields"},
+        {id:"2604.04990", t:"Loop closure for long-term outdoor SLAM"},
+        {id:"2603.30033", t:"Visual relocalisation across seasons"}],
+  sie: [{id:"2604.20871", t:"Optimisation under stochastic constraints"},
+        {id:"2604.08822", t:"Distributionally-robust deep learning"},
+        {id:"2603.31002", t:"Federated optimisation for foundation models"}],
+  wil: [{id:"2604.17880", t:"Open-vocabulary 3D from monocular video"},
+        {id:"2604.06013", t:"Pretrained features for embodied agents"},
+        {id:"2603.27117", t:"Learning policies from human videos"}],
+  def: [{id:"2604.19002", t:"Reduced-order models for soft fingers"},
+        {id:"2604.06443", t:"Differentiable FEM for soft-body control"},
+        {id:"2603.26442", t:"Vision-based shape sensing in soft bodies"}],
+  chr: [{id:"2604.21229", t:"Multi-agent navigation under social cues"},
+        {id:"2604.09701", t:"Predicting pedestrian flow with diffusion"},
+        {id:"2603.29812", t:"Cooperative perception for AV fleets"}],
+  rsl: [{id:"2604.22441", t:"Quadruped locomotion at the limits"},
+        {id:"2604.08891", t:"Terrain-conditioned RL with latent gaits"},
+        {id:"2603.31199", t:"Whole-body manipulation on legged platforms"}],
+  asl: [{id:"2604.18933", t:"Drone autonomy under wind perturbations"},
+        {id:"2604.07320", t:"Vision-based agile flight in forests"},
+        {id:"2603.30577", t:"Multi-rotor SLAM with learned features"}],
+  eai: [{id:"2604.22102", t:"Foundation models for control: a survey"},
+        {id:"2604.10110", t:"Compositionality in vision-language-action"},
+        {id:"2603.31443", t:"Causal abstractions for transfer"}],
+  epf: [{id:"2603.16683", t:"Whole-body control for a salamander robot"},
+        {id:"2604.05229", t:"Amphibious gaits via central pattern generators"},
+        {id:"2603.28321", t:"Spinal-cord-inspired controllers for legged robots"}],
+  cvl: [{id:"2604.21660", t:"Implicit shape priors from a single image"},
+        {id:"2604.09011", t:"Self-supervised 3D from in-the-wild video"},
+        {id:"2603.30899", t:"Generalisable 6-DoF object pose"}],
+  pol: [{id:"2604.17220", t:"Industrial assembly with skill libraries"},
+        {id:"2604.08107", t:"Bin-picking with closed-loop diffusion policies"},
+        {id:"2603.30771", t:"Online MPC with learned dynamics"}],
+  sap: [{id:"2604.20338", t:"Egocentric scene understanding for AR"},
+        {id:"2604.09122", t:"Action anticipation from sparse cues"},
+        {id:"2603.31055", t:"Open-set 3D detection in cluttered rooms"}],
+  kth: [{id:"2604.18712", t:"Human-aware motion planning at scale"},
+        {id:"2604.06511", t:"Visual SLAM under reflective scenes"},
+        {id:"2603.29220", t:"Affective HRI with learned priors"}],
+  aal: [{id:"2604.19884", t:"Probabilistic numerics for control"},
+        {id:"2604.07901", t:"Bayesian RL with neural process priors"},
+        {id:"2603.30334", t:"Bandits for adaptive scientific discovery"}],
+  trt: [{id:"2604.20119", t:"Driving policies with weather-conditioned priors"},
+        {id:"2604.08550", t:"Real-time semantic segmentation under fog"},
+        {id:"2603.31229", t:"Cooperative perception for nordic conditions"}],
+};
+
+/* ------------------- Build SVG ------------------- */
+const svg = document.getElementById("constellation");
+const ns  = "http://www.w3.org/2000/svg";
+
+/* Mercator · fitted to tracked-country lat/lon span so the map fills the canvas
+   edge-to-edge. Polygon is the FIT REFERENCE; country geometry extending past it
+   draws and is clipped by the SVG viewBox. */
+const PROJ = d3.geoMercator().center([10, 51]);
+PROJ.fitExtent([[0, 0], [1000, 560]], {
+  type: "Polygon",
+  coordinates: [[[-15, 61], [32, 61], [32, 41], [-15, 41], [-15, 61]]]
+});
+const pathGen = d3.geoPath(PROJ);
+
+/* Project each lab once. jx/jy is small pixel jitter for cities sharing coords. */
+LABS.forEach(l => { const [px, py] = PROJ([l.lon, l.lat]); l.x = px + l.jx; l.y = py + l.jy; });
+
+/* Grid */
+const grid = document.getElementById("grid");
+for (let x = 100; x < 1000; x += 100) {
+  const l = document.createElementNS(ns, "line");
+  l.setAttribute("x1", x); l.setAttribute("x2", x);
+  l.setAttribute("y1", 30); l.setAttribute("y2", 530);
+  l.setAttribute("class", "grid-line");
+  grid.appendChild(l);
+}
+for (let y = 100; y < 530; y += 100) {
+  const l = document.createElementNS(ns, "line");
+  l.setAttribute("y1", y); l.setAttribute("y2", y);
+  l.setAttribute("x1", 30); l.setAttribute("x2", 970);
+  l.setAttribute("class", "grid-line");
+  grid.appendChild(l);
+}
+
+/* Real Europe outline · fetched from world-atlas (Natural Earth 50m). */
+// world-atlas uses ISO 3166-1 *numeric* codes (strings) for feature ids.
+const FRAME_NAMES = new Set(["United Kingdom","Ireland","Netherlands","Belgium","Luxembourg","France","Germany","Switzerland","Austria","Italy","Spain","Portugal","Denmark","Norway","Sweden","Finland","Estonia","Latvia","Lithuania","Poland","Czechia","Slovakia","Hungary","Slovenia","Croatia","Bosnia and Herz.","Serbia","Montenegro","Macedonia","North Macedonia","Albania","Greece","Bulgaria","Romania","Moldova","Ukraine","Belarus","Iceland","Cyprus","Malta","Kosovo","Andorra","Monaco","Liechtenstein","San Marino"]);
+const TRACKED_COUNTRIES = new Set(["United Kingdom","Netherlands","Belgium","Germany","France","Switzerland","Italy","Czechia","Sweden","Finland","Estonia"]);
+const geoFillG   = document.getElementById("geo-fill");
+const geoStrokeG = document.getElementById("geo-stroke");
+fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json")
+  .then(r => r.json())
+  .then(world => {
+    const feats = topojson.feature(world, world.objects.countries).features;
+    feats.forEach(f => {
+      const name = f.properties.name;
+      if (!FRAME_NAMES.has(name)) return;
+      const d = pathGen(f);
+      if (!d) return;
+      const fill = document.createElementNS(ns, "path");
+      fill.setAttribute("d", d);
+      fill.setAttribute("class", "country-fill-path");
+      if (TRACKED_COUNTRIES.has(name)) fill.setAttribute("style", "fill: rgba(244,241,234,0.085);");
+      geoFillG.appendChild(fill);
+      const stroke = document.createElementNS(ns, "path");
+      stroke.setAttribute("d", d);
+      if (TRACKED_COUNTRIES.has(name)) stroke.setAttribute("style", "stroke: rgba(244,241,234,0.62); stroke-width: 0.7;");
+      geoStrokeG.appendChild(stroke);
+    });
+  })
+  .catch(() => { /* offline fallback: stars still render on the grid */ });
+
+/* Edges · fake collaborator graph. Hand-picked + sweetened by proximity. */
+const edgePairs = [
+  // intra-UK
+  ["oxr","oat"], ["cml","san"], ["imh","imp"], ["imp","ucg"], ["ucg","oxr"], ["edi","oxr"], ["cml","ucg"], ["oat","cml"],
+  // UK ↔ continent
+  ["oxr","rsl"], ["imp","tum"], ["cml","tue"], ["ucg","tue"], ["san","epf"],
+  // CH cluster
+  ["rsl","asl"], ["asl","eai"], ["rsl","eai"], ["epf","cvl"], ["epf","rsl"], ["cvl","tue"], ["eai","tum"],
+  // DE cluster
+  ["tum","bon"], ["tum","frb"], ["frb","tue"], ["hd","tue"], ["bon","jul"], ["bre","bon"], ["jul","ucg"],
+  // FR cluster + diasporic
+  ["wil","sie"], ["wil","def"], ["chr","tum"], ["sie","tue"], ["def","epf"], ["wil","cvl"],
+  // NL/BE
+  ["tud","klv"], ["tud","bre"], ["qut","tud"], ["klv","tum"], ["klv","tue"],
+  // IT
+  ["pol","tum"], ["pol","epf"], ["sap","wil"], ["pol","sap"],
+  // Nordic + east
+  ["kth","aal"], ["aal","tue"], ["kth","tud"], ["trt","kth"], ["trt","aal"], ["ctu","tum"], ["ctu","sap"], ["ctu","wil"],
+];
+
+const edgesG = document.getElementById("edges");
+const edges = [];
+const labMap = Object.fromEntries(LABS.map(l => [l.id, l]));
+
+edgePairs.forEach((p, i) => {
+  const a = labMap[p[0]], b = labMap[p[1]];
+  if (!a || !b) return;
+  const line = document.createElementNS(ns, "line");
+  line.setAttribute("x1", a.x); line.setAttribute("y1", a.y);
+  line.setAttribute("x2", b.x); line.setAttribute("y2", b.y);
+  line.setAttribute("class", "edge");
+  line.setAttribute("opacity", 0.06);
+  edgesG.appendChild(line);
+  edges.push({
+    el: line,
+    base: 0.05 + Math.random() * 0.06,
+    amp:  0.06 + Math.random() * 0.08,
+    period: 6 + Math.random() * 6,
+    phase: Math.random() * Math.PI * 2,
+  });
+});
+
+/* Stars */
+const starsG = document.getElementById("stars");
+const stars  = [];
+LABS.forEach(lab => {
+  const r = Math.max(2.0, Math.min(5.5, 1.6 + Math.sqrt(lab.researchers) * 0.55));
+
+  // halo
+  const halo = document.createElementNS(ns, "circle");
+  halo.setAttribute("cx", lab.x); halo.setAttribute("cy", lab.y);
+  halo.setAttribute("r", r * 4.5);
+  halo.setAttribute("fill", "url(#starGrad)");
+  halo.setAttribute("opacity", 0.5);
+  halo.setAttribute("class", "star-halo");
+  starsG.appendChild(halo);
+
+  // core
+  const c = document.createElementNS(ns, "circle");
+  c.setAttribute("cx", lab.x); c.setAttribute("cy", lab.y);
+  c.setAttribute("r", r);
+  c.setAttribute("class", "star");
+  c.setAttribute("data-id", lab.id);
+  starsG.appendChild(c);
+
+  stars.push({
+    lab, core: c, halo, r,
+    base: 0.55 + Math.random() * 0.25,
+    amp:  0.25 + Math.random() * 0.3,
+    period: 4 + Math.random() * 4,
+    phase: Math.random() * Math.PI * 2,
+  });
+});
+
+/* ------------------- Animation loop ------------------- */
+const t0 = performance.now();
+function tick(now) {
+  const t = (now - t0) / 1000;
+  for (const s of stars) {
+    const v = s.base + s.amp * Math.sin(t * (Math.PI * 2 / s.period) + s.phase);
+    s.core.setAttribute("opacity", Math.max(0.15, Math.min(1, v)));
+    s.halo.setAttribute("opacity", Math.max(0.05, Math.min(0.55, v * 0.6)));
+  }
+  for (const e of edges) {
+    const v = e.base + e.amp * (0.5 + 0.5 * Math.sin(t * (Math.PI * 2 / e.period) + e.phase));
+    e.el.setAttribute("opacity", Math.max(0.02, Math.min(0.4, v)));
+  }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+/* ------------------- Hover tooltip ------------------- */
+const tip = document.getElementById("tip");
+const wrap = document.getElementById("map-wrap");
+
+function showTip(lab, evt) {
+  const rect = wrap.getBoundingClientRect();
+  tip.style.left = (evt.clientX - rect.left) + "px";
+  tip.style.top  = (evt.clientY - rect.top)  + "px";
+  tip.innerHTML = `
+    <div class="tip-cat">${lab.cat}</div>
+    <div class="tip-name">${lab.name}</div>
+    <div class="tip-meta">${lab.city} · ${lab.country} · ${lab.researchers} researchers</div>`;
+  tip.classList.add("show");
+}
+function hideTip() { tip.classList.remove("show"); }
+
+starsG.addEventListener("pointermove", e => {
+  if (e.target.classList && e.target.classList.contains("star")) {
+    const id = e.target.getAttribute("data-id");
+    const lab = labMap[id];
+    if (lab) showTip(lab, e);
+  }
+});
+starsG.addEventListener("pointerleave", hideTip);
+starsG.addEventListener("pointerout", e => {
+  if (e.target.classList && e.target.classList.contains("star")) hideTip();
+});
+
+/* ------------------- Click → info card ------------------- */
+const infoCard = document.getElementById("info-card");
+let activeId = null;
+
+function clearCard() {
+  infoCard.classList.remove("show");
+  activeId = null;
+}
+
+function showCard(lab) {
+  const papers = (PAPERS[lab.id] || []).map(p =>
+    `<div class="ic-paper"><span class="ax">arXiv:${p.id}</span>${p.t}</div>`).join("");
+  infoCard.innerHTML =
+    `<div class="ic-close" data-close>\u2715</div>` +
+    `<div class="ic-cat">${lab.cat}</div>` +
+    `<div class="ic-name">${lab.name}</div>` +
+    `<div class="ic-meta">${lab.city} \u00b7 ${lab.country} \u00b7 ${lab.researchers} researchers</div>` +
+    `<div class="ic-papers">${papers}</div>`;
+  infoCard.classList.add("show");
+  activeId = lab.id;
+}
+
+infoCard.addEventListener("click", e => {
+  if (e.target.dataset && e.target.dataset.close !== undefined) clearCard();
+});
+
+starsG.addEventListener("click", e => {
+  if (e.target.classList && e.target.classList.contains("star")) {
+    const id = e.target.getAttribute("data-id");
+    const lab = labMap[id];
+    if (!lab) return;
+    if (activeId === id) { clearCard(); return; }
+    showCard(lab);
+  }
+});
+
+/* (no-op orbit tick removed) */
+function orbitTick() {
+  if (false) {
+    const rect = svg.getBoundingClientRect();
+    const wrapRect = wrap.getBoundingClientRect();
+    const sx = rect.width / 1000;
+    const sy = rect.height / 560;
+    const cx = 0;
+    const cy = 0;
+    const t = 0;
+    const baseR = 0;
+    [].forEach((d, i) => {
+      const ang = 0;
+      const r = 0;
+      const x = cx + Math.cos(ang) * r;
+      const y = cy + Math.sin(ang) * r * 0.55;  // flatten ellipse
+      d.style.left = x + "px";
+      d.style.top  = y + "px";
+    });
+  }
+  requestAnimationFrame(orbitTick);
+}
+requestAnimationFrame(orbitTick);
+
+/* Click outside a star clears card */
+svg.addEventListener("click", e => {
+  if (!e.target.classList || !e.target.classList.contains("star")) clearCard();
+});
+
+/* ------------------- Country list ------------------- */
+const list = document.getElementById("country-list");
+const grouped = {};
+for (const lab of LABS) {
+  (grouped[lab.country] = grouped[lab.country] || []).push(lab);
+}
+const order = ["United Kingdom","Germany","Switzerland","France","Italy","Netherlands","Belgium","Sweden","Finland","Czechia","Estonia"];
+order.forEach((country, idx) => {
+  const labs = grouped[country] || [];
+  const block = document.createElement("div");
+  block.className = "py-5 border-b rule";
+  block.innerHTML = `
+    <div class="flex items-baseline justify-between gap-6">
+      <div class="flex items-baseline gap-4 min-w-0">
+        <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-dim w-6">${String(idx+1).padStart(2,"0")}</span>
+        <div class="min-w-0">
+          <div class="text-paper text-[15px] tracking-[-0.005em]">${country}</div>
+          <div class="text-chalk text-[13px] mt-1 leading-snug">${COUNTRY_BLURBS[country] || ""}</div>
+        </div>
+      </div>
+      <div class="font-mono text-[12px] text-paper">${labs.length}</div>
+    </div>`;
+  list.appendChild(block);
+});
+
+</script>
 </body>
 </html>

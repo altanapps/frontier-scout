@@ -17,3 +17,7 @@ build/
 *.db-journal
 digest.md
 .DS_Store
+
+# one-time artifacts not for repo
+/claude-design/
+/examples/eu-uk-frontier-labs.txt

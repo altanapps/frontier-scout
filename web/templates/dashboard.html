@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Today — Meridian{% endblock %}
+{% block content %}
+
+<header class="mb-12 max-w-3xl">
+  <div class="label mb-3">Today · {{ today }}</div>
+  <h1 class="display text-4xl md:text-6xl font-light text-paper">Your daily intel.</h1>
+  <p class="mt-5 text-chalk leading-relaxed">
+    Watching {{ people_count }} researchers across {{ labs_count }} labs.
+  </p>
+
+  <div class="mt-8 flex flex-wrap gap-2 items-center">
+    <span class="pill-active">Robotics</span>
+    <span class="pill-soon">AI / ML · soon</span>
+    <span class="pill-soon">Neuroscience · soon</span>
+    <span class="pill-soon">Biotech · soon</span>
+    <span class="pill-soon">Quantum · soon</span>
+  </div>
+  <p class="meta mt-4 normal-case tracking-normal text-dim">
+    You're viewing the Robotics track. Other verticals are in build —
+    <a href="https://github.com/altanapps/frontier-scout/issues" class="underline decoration-dotted underline-offset-4 hover:text-paper">tell us which to ship next</a>.
+  </p>
+</header>
+
+<div class="hair mb-10"></div>
+
+{% if signals %}
+<section class="mb-14">
+  <div class="label mb-5">Signals · {{ signals|length }}</div>
+  <ul class="space-y-3">
+  {% for s in signals %}
+    <li class="text-sm flex items-baseline gap-4 border-b border-[rgba(244,241,234,0.08)] pb-3">
+      <span class="meta normal-case tracking-normal whitespace-nowrap">{{ s.observed_at[:10] }}</span>
+      <span class="flex-1"><span class="text-paper">{{ s.person_name }}</span> <span class="text-dim">·</span> <span class="text-chalk">{{ s.detail }}</span></span>
+      {% if s.url %}<a href="{{ s.url }}" class="text-dim hover:text-paper text-xs" target="_blank">↗</a>{% endif %}
+    </li>
+  {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section>
+  <div class="flex items-baseline justify-between mb-5">
+    <div class="label">Papers · {{ papers_by_lab.values()|map('length')|sum }}</div>
+    <a href="/papers" class="label hover:text-paper transition normal-case tracking-normal">View all →</a>
+  </div>
+
+  {% if not papers_by_lab %}
+    <p class="text-dim text-sm leading-relaxed max-w-xl">
+      No papers in the database yet. Run <code class="font-mono text-chalk">frontier-scout papers --since 14d</code> to populate.
+    </p>
+  {% endif %}
+
+  {% for lab, papers in papers_by_lab.items() %}
+    <div class="mb-12">
+      <h3 class="text-lg font-medium text-paper mb-1">{{ lab }}</h3>
+      <div class="meta normal-case tracking-normal mb-5">{{ papers|length }} {{ 'paper' if papers|length == 1 else 'papers' }}</div>
+
+      <ul class="space-y-6">
+      {% for p in papers %}
+        <li id="paper-{{ p.id }}" class="border-l {% if p.is_sent %}border-emerald-700/70{% elif p.is_saved %}border-amber-600/70{% else %}border-[rgba(244,241,234,0.10)]{% endif %} pl-5 py-1">
+          <div class="flex items-start justify-between gap-6">
+            <div class="flex-1 min-w-0">
+              <a href="https://arxiv.org/abs/{{ p.arxiv_id }}" target="_blank" class="text-paper hover:underline decoration-dotted underline-offset-4 font-medium leading-snug block">{{ p.title }}</a>
+              <div class="meta mt-2">
+                <span class="text-chalk">{{ p.matched_person }}</span>
+                <span class="text-dim mx-1">·</span>{{ p.published[:10] }}
+                <span class="text-dim mx-1">·</span>arxiv:{{ p.arxiv_id }}
+              </div>
+              {% if p.why_it_matters %}
+              <div class="text-sm text-chalk mt-3 italic leading-relaxed border-l border-[rgba(244,241,234,0.18)] pl-4">{{ p.why_it_matters }}</div>
+              {% endif %}
+            </div>
+            <div class="flex flex-col gap-2 shrink-0">
+              <button onclick="draft({{ p.id }})" class="btn-paper">Draft email</button>
+              <button onclick="act({{ p.id }}, '{% if p.is_saved %}unsave{% else %}save{% endif %}')" class="btn-ghost">{% if p.is_saved %}★ Saved{% else %}Save{% endif %}</button>
+              <button onclick="act({{ p.id }}, '{% if p.is_sent %}unsent{% else %}sent{% endif %}')" class="btn-ghost">{% if p.is_sent %}✓ Sent{% else %}Mark sent{% endif %}</button>
+              <button onclick="act({{ p.id }}, 'hide')" class="btn-ghost opacity-60">Hide</button>
+            </div>
+          </div>
+          <div id="draft-{{ p.id }}" class="hidden mt-4 bg-[rgba(244,241,234,0.03)] border border-[rgba(244,241,234,0.12)] p-5 font-mono text-xs text-chalk whitespace-pre-wrap leading-relaxed"></div>
+        </li>
+      {% endfor %}
+      </ul>
+    </div>
+  {% endfor %}
+</section>
+
+<script>
+async function draft(id) {
+  const target = document.getElementById('draft-' + id);
+  target.classList.remove('hidden');
+  target.textContent = 'Drafting…';
+  const res = await fetch(`/papers/${id}/draft`, {method:'POST'});
+  const data = await res.json();
+  target.textContent = data.draft || data.error;
+}
+
+async function act(id, action) {
+  await fetch(`/papers/${id}/${action}`, {method:'POST'});
+  location.reload();
+}
+</script>
+
+{% endblock %}

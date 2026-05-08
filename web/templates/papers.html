@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Papers — Meridian{% endblock %}
+{% block content %}
+
+<header class="mb-10 max-w-3xl">
+  <div class="label mb-3">Papers</div>
+  <h1 class="display text-4xl md:text-5xl font-light text-paper">Every paper, indexed.</h1>
+</header>
+
+<form class="mb-8 flex gap-3 flex-wrap items-center text-sm">
+  <span class="text-dim font-mono text-xs uppercase tracking-widest">Showing</span>
+  <select name="status" class="bg-ink border border-[rgba(244,241,234,0.18)] px-3 py-1.5 text-sm text-paper focus:outline-none focus:border-[rgba(244,241,234,0.55)]">
+    <option value="active" {% if status == "active" %}selected{% endif %}>active</option>
+    <option value="saved"  {% if status == "saved"  %}selected{% endif %}>saved</option>
+    <option value="sent"   {% if status == "sent"   %}selected{% endif %}>sent</option>
+    <option value="hidden" {% if status == "hidden" %}selected{% endif %}>hidden</option>
+    <option value="all"    {% if status == "all"    %}selected{% endif %}>all</option>
+  </select>
+  <span class="text-dim font-mono text-xs uppercase tracking-widest">papers from</span>
+  <select name="lab" class="bg-ink border border-[rgba(244,241,234,0.18)] px-3 py-1.5 text-sm text-paper focus:outline-none focus:border-[rgba(244,241,234,0.55)] max-w-xs">
+    <option value="">all labs</option>
+    {% for l in labs %}<option value="{{ l }}" {% if l == lab_filter %}selected{% endif %}>{{ l }}</option>{% endfor %}
+  </select>
+  <span class="text-dim font-mono text-xs uppercase tracking-widest">in last</span>
+  <select name="since" class="bg-ink border border-[rgba(244,241,234,0.18)] px-3 py-1.5 text-sm text-paper focus:outline-none focus:border-[rgba(244,241,234,0.55)]">
+    <option value="7d"  {% if since == "7d"  %}selected{% endif %}>7 days</option>
+    <option value="30d" {% if since == "30d" %}selected{% endif %}>30 days</option>
+    <option value="90d" {% if since == "90d" %}selected{% endif %}>90 days</option>
+    <option value="all" {% if since == "all" %}selected{% endif %}>all time</option>
+  </select>
+  <button class="btn-paper">Apply</button>
+</form>
+
+<div class="hair mb-6"></div>
+
+<div class="label mb-5">{{ papers|length }} papers</div>
+
+{% if not papers %}
+  <p class="text-dim text-sm leading-relaxed max-w-xl">No papers match these filters. Try widening the time window or removing the lab filter.</p>
+{% endif %}
+
+<ul class="divide-y divide-[rgba(244,241,234,0.08)]">
+{% for p in papers %}
+  <li>
+    <a href="/papers/{{ p.id }}" class="row block py-4 px-2 -mx-2">
+      <div class="flex items-start justify-between gap-6">
+        <div class="flex-1 min-w-0">
+          <div class="text-paper font-medium leading-snug">{{ p.title }}</div>
+          <div class="meta mt-1 normal-case tracking-normal">
+            <span class="text-chalk">{{ p.matched_person }}</span>
+            <span class="text-dim mx-1">·</span>{{ p.matched_lab }}
+            <span class="text-dim mx-1">·</span>{{ p.published[:10] }}
+            <span class="text-dim mx-1">·</span>arxiv:{{ p.arxiv_id }}
+          </div>
+          {% if p.why_it_matters %}<div class="text-sm text-chalk mt-2 italic leading-relaxed">{{ p.why_it_matters }}</div>{% endif %}
+        </div>
+        {% if p.action %}
+          <span class="meta normal-case tracking-normal whitespace-nowrap text-{% if p.action == 'sent' %}emerald-400{% elif p.action == 'saved' %}amber-400{% else %}dim{% endif %}">
+            {{ p.action }}
+          </span>
+        {% endif %}
+      </div>
+    </a>
+  </li>
+{% endfor %}
+</ul>
+
+{% endblock %}

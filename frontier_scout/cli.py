@@ -133,6 +133,7 @@ def papers(config_path: Path, db_path: Path, since: str, max_results: int) -> No
                      paper["pdf_url"], hit_name, lab.name),
                 )
                 matched += 1
+            con.commit()
             click.echo(f"  fetched {len(fetched)} papers in window, matched {matched}")
             total_matched += matched
         click.echo(f"Done. {total_matched} matches across {len(labs)} labs.")

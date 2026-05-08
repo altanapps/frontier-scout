@@ -54,6 +54,9 @@ MIGRATIONS = [
     "ALTER TABLE people ADD COLUMN personal_site TEXT",
     "ALTER TABLE people ADD COLUMN email TEXT",
     "ALTER TABLE people ADD COLUMN enriched_at TEXT",
+    "ALTER TABLE papers ADD COLUMN doi TEXT",
+    "ALTER TABLE papers ADD COLUMN venue TEXT",
+    "ALTER TABLE papers ADD COLUMN openalex_id TEXT",
 ]
 
 

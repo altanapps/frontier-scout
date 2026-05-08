@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ paper.title }} — Meridian{% endblock %}
+{% block content %}
+
+<a href="/papers" class="label hover:text-paper transition inline-block mb-6">← Papers</a>
+
+<article class="max-w-3xl">
+  <div class="label mb-4">arxiv:{{ paper.arxiv_id }} · {{ paper.published[:10] }}{% if action %} · <span class="text-{% if action == 'sent' %}emerald-400{% elif action == 'saved' %}amber-400{% else %}dim{% endif %}">{{ action }}</span>{% endif %}</div>
+  <h1 class="display text-3xl md:text-4xl font-light text-paper leading-tight">{{ paper.title }}</h1>
+
+  <div class="meta normal-case tracking-normal mt-5 text-chalk">
+    {% if person %}
+      <a href="/people/{{ person.id }}" class="text-paper hover:underline decoration-dotted underline-offset-4">{{ paper.matched_person }}</a>
+    {% else %}
+      {{ paper.matched_person }}
+    {% endif %}
+    <span class="text-dim mx-1">·</span>
+    <a href="/labs/{{ paper.matched_lab }}" class="hover:text-paper">{{ paper.matched_lab }}</a>
+  </div>
+
+  {% if paper.why_it_matters %}
+  <div class="mt-8 p-5 border border-[rgba(244,241,234,0.12)] bg-[rgba(244,241,234,0.03)]">
+    <div class="label mb-2">Why it matters</div>
+    <div class="text-paper italic leading-relaxed">{{ paper.why_it_matters }}</div>
+  </div>
+  {% endif %}
+
+  <div class="mt-8 flex gap-3 flex-wrap">
+    <a href="https://arxiv.org/abs/{{ paper.arxiv_id }}" target="_blank" class="btn-paper">Read on arXiv ↗</a>
+    <button onclick="draft({{ paper.id }})" class="btn-ghost">Draft email</button>
+    <button onclick="act({{ paper.id }}, 'save')" class="btn-ghost">Save</button>
+    <button onclick="act({{ paper.id }}, 'sent')" class="btn-ghost">Mark sent</button>
+    <button onclick="act({{ paper.id }}, 'hide')" class="btn-ghost opacity-60">Hide</button>
+  </div>
+
+  <p class="meta normal-case tracking-normal mt-6 text-dim max-w-md">
+    Meridian links out to the source. We don't mirror abstracts — read at arXiv, write the email here.
+  </p>
+
+  <div id="draft-output" class="hidden mt-6 bg-[rgba(244,241,234,0.03)] border border-[rgba(244,241,234,0.12)] p-5 font-mono text-xs text-chalk whitespace-pre-wrap leading-relaxed"></div>
+
+  {% if drafts %}
+  <section class="mt-12">
+    <div class="label mb-4">Past drafts · {{ drafts|length }}</div>
+    {% for d in drafts %}
+    <div class="mb-6 border-l border-[rgba(244,241,234,0.10)] pl-5">
+      <div class="meta mb-2 normal-case tracking-normal">{{ d.created_at[:16] }}</div>
+      <pre class="font-mono text-xs text-chalk whitespace-pre-wrap leading-relaxed">{{ d.body }}</pre>
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <section class="mt-12 pt-8 border-t border-[rgba(244,241,234,0.08)]">
+    <div class="label mb-3">All authors</div>
+    <div class="text-sm text-chalk leading-relaxed">{{ paper.authors }}</div>
+  </section>
+</article>
+
+<script>
+async function draft(id) {
+  const target = document.getElementById('draft-output');
+  target.classList.remove('hidden');
+  target.textContent = 'Drafting…';
+  const res = await fetch(`/papers/${id}/draft`, {method:'POST'});
+  const data = await res.json();
+  target.textContent = data.draft || data.error;
+}
+async function act(id, action) {
+  await fetch(`/papers/${id}/${action}`, {method:'POST'});
+  location.reload();
+}
+</script>
+
+{% endblock %}

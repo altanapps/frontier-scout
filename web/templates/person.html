@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ person.name }} — Meridian{% endblock %}
+{% block content %}
+
+<a href="/people" class="label hover:text-paper transition inline-block mb-6">← People</a>
+
+<header class="mb-10 border-b border-[rgba(244,241,234,0.08)] pb-8">
+  <div class="label mb-3">{{ person.role or 'Researcher' }}</div>
+  <h1 class="display text-4xl md:text-5xl font-light text-paper">{{ person.name }}</h1>
+  <div class="meta normal-case tracking-normal mt-3 text-chalk">{{ person.lab }}</div>
+
+  <div class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm font-mono">
+    {% if person.github_handle %}<a href="https://github.com/{{ person.github_handle }}" target="_blank" class="text-chalk hover:text-paper">gh:{{ person.github_handle }}</a>{% endif %}
+    {% if person.twitter_handle %}<a href="https://twitter.com/{{ person.twitter_handle }}" target="_blank" class="text-chalk hover:text-paper">@{{ person.twitter_handle }}</a>{% endif %}
+    {% if person.personal_site %}<a href="{{ person.personal_site }}" target="_blank" class="text-chalk hover:text-paper truncate max-w-xs">{{ person.personal_site }}</a>{% endif %}
+    {% if person.email %}<a href="mailto:{{ person.email }}" class="text-chalk hover:text-paper">{{ person.email }}</a>{% endif %}
+    {% if person.profile_url %}<a href="{{ person.profile_url }}" target="_blank" class="text-dim hover:text-paper truncate max-w-xs">Lab profile ↗</a>{% endif %}
+  </div>
+  {% if person.research_area %}
+  <div class="text-sm text-dim mt-4 leading-relaxed">{{ person.research_area }}</div>
+  {% endif %}
+</header>
+
+<section class="mb-12">
+  <div class="label mb-5">Recent papers · {{ papers|length }}</div>
+  {% if not papers %}
+    <div class="border border-[rgba(244,241,234,0.10)] bg-[rgba(244,241,234,0.02)] p-5 text-sm text-chalk leading-relaxed max-w-2xl">
+      <p class="mb-3">No arXiv papers found for this researcher yet. Common reasons:</p>
+      <ul class="list-disc list-inside space-y-1 text-dim">
+        <li>This lab publishes primarily off-arXiv — biotech labs usually go to bioRxiv, Nature, or Science</li>
+        <li>The researcher hasn't published in the configured arXiv categories recently</li>
+        <li>The papers pipeline hasn't been run yet, or arXiv is rate-limiting</li>
+      </ul>
+      <p class="mt-3 text-dim font-mono text-xs">bioRxiv integration is on the V2 roadmap.</p>
+    </div>
+  {% endif %}
+  <ul class="space-y-6">
+  {% for p in papers %}
+    <li class="border-l border-[rgba(244,241,234,0.10)] pl-5">
+      <a href="https://arxiv.org/abs/{{ p.arxiv_id }}" target="_blank" class="text-paper hover:underline decoration-dotted underline-offset-4 font-medium">{{ p.title }}</a>
+      <div class="meta mt-2">{{ p.published[:10] }} · arxiv:{{ p.arxiv_id }}</div>
+      {% if p.why_it_matters %}<div class="text-sm text-chalk mt-3 italic leading-relaxed">{{ p.why_it_matters }}</div>{% endif %}
+    </li>
+  {% endfor %}
+  </ul>
+</section>
+
+{% if signals %}
+<section class="mb-12">
+  <div class="label mb-5">Signals · {{ signals|length }}</div>
+  <ul class="space-y-3">
+  {% for s in signals %}
+    <li class="text-sm flex items-baseline gap-4 border-b border-[rgba(244,241,234,0.08)] pb-3">
+      <span class="meta normal-case tracking-normal whitespace-nowrap">{{ s.observed_at[:10] }}</span>
+      <span class="flex-1 text-chalk">{{ s.detail }}</span>
+      {% if s.url %}<a href="{{ s.url }}" target="_blank" class="text-dim hover:text-paper text-xs">↗</a>{% endif %}
+    </li>
+  {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% endblock %}

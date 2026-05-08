@@ -262,3 +262,7 @@ labs:
   - name: "TU Delft — QuTech Hanson Lab"
     people_url: https://qutech.nl/lab/hanson-lab/hanson-lab-people/
     arxiv_categories: [quant-ph, cond-mat.mes-hall]
+
+  - name: "Imperial College — Robot Learning Lab (Johns)"
+    people_url: https://www.robot-learning.uk/team
+    arxiv_categories: [cs.RO, cs.CV, cs.LG]
