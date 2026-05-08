@@ -68,6 +68,7 @@ def roster(config_path: Path, db_path: Path) -> None:
                         p.get("research_area", "").strip(),
                     ),
                 )
+            con.commit()
             click.echo(f"  +{len(people)} people")
 
 
