@@ -1,23 +1,37 @@
-import json
-
 from anthropic import Anthropic
 
 PROMPT = """\
 You are looking up public profile info for a research-lab member.
 
-Use web search to find:
-- github_handle (string, just the username; "" if not found)
-- twitter_handle (string, without @; "" if not found)
+Use the web_search tool to find:
+- github_handle (just the username; "" if not found)
+- twitter_handle (without @; "" if not found; PERSONAL handle, not a lab account)
 - personal_site (full URL; "" if not found)
 - email (only if publicly listed on the lab page or personal site; "" otherwise)
 
-Be conservative: if you're not confident a profile is the same person, leave it
-blank. Disambiguate using lab name and research area. Many academics have
-common names — do not guess.
+Be conservative on identity. If you can't disambiguate a profile from common-named
+people via lab affiliation or research area, leave the field blank. Do not guess.
+A lab's account (e.g. @BIOROB_EPFL) is NOT a personal handle — leave twitter_handle
+blank in that case.
 
-Output JSON only, no prose, no code fence:
-{"github_handle": "...", "twitter_handle": "...", "personal_site": "...", "email": ""}
+After your searches, you MUST call the report_handles tool exactly once with your
+findings. That is your final action — no prose afterward.
 """
+
+REPORT_TOOL = {
+    "name": "report_handles",
+    "description": "Report the public profile handles found for this researcher. Call this exactly once as your final action.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "github_handle": {"type": "string"},
+            "twitter_handle": {"type": "string"},
+            "personal_site": {"type": "string"},
+            "email": {"type": "string"},
+        },
+        "required": ["github_handle", "twitter_handle", "personal_site", "email"],
+    },
+}
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
 
@@ -32,13 +46,12 @@ def enrich_person(
     client = Anthropic()
     msg = client.messages.create(
         model=model,
-        max_tokens=1024,
+        max_tokens=2048,
         system=[{"type": "text", "text": PROMPT, "cache_control": {"type": "ephemeral"}}],
-        tools=[{
-            "type": "web_search_20250305",
-            "name": "web_search",
-            "max_uses": max_searches,
-        }],
+        tools=[
+            {"type": "web_search_20250305", "name": "web_search", "max_uses": max_searches},
+            REPORT_TOOL,
+        ],
         messages=[{
             "role": "user",
             "content": (
@@ -49,21 +62,7 @@ def enrich_person(
         }],
     )
 
-    text = ""
-    for block in reversed(msg.content):
-        if getattr(block, "type", None) == "text":
-            text = block.text.strip()
-            break
-
-    if text.startswith("```"):
-        text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
-    text = text.strip()
-
-    if not text:
-        return {}
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        return {}
+    for block in msg.content:
+        if getattr(block, "type", None) == "tool_use" and getattr(block, "name", None) == "report_handles":
+            return dict(block.input)
+    return {}
