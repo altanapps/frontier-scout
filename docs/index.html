@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>frontier-scout — daily intel on European deep-tech research labs</title>
+  <meta name="description" content="Track 887 researchers across 32 European deep-tech labs. Daily arXiv digest, GitHub signals, paper-anchored outreach drafts. Open source, MIT, under $1/month." />
+
+  <meta property="og:title" content="frontier-scout — daily intel on European deep-tech labs" />
+  <meta property="og:description" content="Track 887 researchers across 32 EU/UK research labs. Daily arXiv digest with one-line summaries. Built for VCs scouting deep-tech." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-neutral-950 text-neutral-100 font-sans antialiased">
+
+  <nav class="border-b border-neutral-900">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="font-mono text-sm">frontier-scout</div>
+      <div class="flex items-center gap-6 text-sm">
+        <a href="#demo" class="text-neutral-400 hover:text-white transition">Demo</a>
+        <a href="https://github.com/altanapps/frontier-scout" class="text-neutral-400 hover:text-white transition">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="max-w-4xl mx-auto px-6 pt-24 pb-16 text-center">
+    <h1 class="text-5xl md:text-7xl font-semibold tracking-tight leading-[1.05]">
+      Daily intel on<br/>
+      European deep-tech labs.
+    </h1>
+    <p class="mt-8 text-lg md:text-xl text-neutral-400 max-w-2xl mx-auto leading-relaxed">
+      Track <span class="text-white">887 researchers</span> across <span class="text-white">32 labs</span> in <span class="text-white">12 countries</span>. Spot new papers, GitHub signals, and outreach openings — before they show up on Twitter.
+    </p>
+    <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+      <a href="#waitlist" class="bg-white text-black px-6 py-3 rounded font-medium hover:bg-neutral-200 transition w-full sm:w-auto">
+        Get the daily digest →
+      </a>
+      <a href="https://github.com/altanapps/frontier-scout" class="border border-neutral-700 px-6 py-3 rounded font-medium hover:border-neutral-500 transition w-full sm:w-auto">
+        ⭐ Star on GitHub
+      </a>
+    </div>
+  </section>
+
+  <section class="max-w-6xl mx-auto px-6 py-16 grid grid-cols-2 md:grid-cols-4 gap-8 text-center border-y border-neutral-900">
+    <div>
+      <div class="text-4xl font-semibold">32</div>
+      <div class="text-xs text-neutral-500 mt-2 uppercase tracking-widest">labs tracked</div>
+    </div>
+    <div>
+      <div class="text-4xl font-semibold">887</div>
+      <div class="text-xs text-neutral-500 mt-2 uppercase tracking-widest">researchers</div>
+    </div>
+    <div>
+      <div class="text-4xl font-semibold">12</div>
+      <div class="text-xs text-neutral-500 mt-2 uppercase tracking-widest">countries</div>
+    </div>
+    <div>
+      <div class="text-4xl font-semibold">&lt;$1</div>
+      <div class="text-xs text-neutral-500 mt-2 uppercase tracking-widest">per month</div>
+    </div>
+  </section>
+
+  <section class="max-w-6xl mx-auto px-6 py-24">
+    <h2 class="text-3xl md:text-4xl font-semibold mb-12 text-center">What you get every morning</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+      <div>
+        <div class="font-mono text-xs text-neutral-500 mb-3">01 / PAPERS</div>
+        <h3 class="text-xl font-semibold mb-3">Every new arXiv paper, grouped by lab</h3>
+        <p class="text-neutral-400 leading-relaxed">
+          New preprints from every researcher you track. Each has a one-sentence "why it matters" written by Claude — concrete claim only, no hype.
+        </p>
+      </div>
+      <div>
+        <div class="font-mono text-xs text-neutral-500 mb-3">02 / SIGNALS</div>
+        <h3 class="text-xl font-semibold mb-3">GitHub events from researchers you're watching</h3>
+        <p class="text-neutral-400 leading-relaxed">
+          Catches when someone pushes a new repo, makes one public, or tags a release. Early signal that a postdoc is spinning something up.
+        </p>
+      </div>
+      <div>
+        <div class="font-mono text-xs text-neutral-500 mb-3">03 / DRAFTS</div>
+        <h3 class="text-xl font-semibold mb-3">Outreach emails anchored on real papers</h3>
+        <p class="text-neutral-400 leading-relaxed">
+          Paste an arXiv ID, get a 4-sentence email referencing a specific claim from the abstract. Reads like you actually read the paper. Because you did.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="demo" class="max-w-4xl mx-auto px-6 py-24">
+    <h2 class="text-3xl md:text-4xl font-semibold mb-3 text-center">A real digest</h2>
+    <p class="text-neutral-400 text-center mb-12">From a 60-day run across EPFL BioRobotics, Imperial Personal Robotics, and Oxford Robotics Institute.</p>
+
+    <div class="bg-neutral-900 border border-neutral-800 rounded-lg p-8 font-mono text-sm overflow-x-auto leading-relaxed">
+      <div class="text-white mb-4"># Frontier Scout — Digest 2026-05-07</div>
+      <div class="text-white mb-2">## Papers (6 across 3 labs)</div>
+      <br/>
+      <div class="text-neutral-500 mb-2">### EPFL — BioRobotics Laboratory</div>
+      <div class="text-neutral-300">- <span class="text-white">Learning Whole-Body Control for a Salamander Robot</span> — <em>Qiyuan Fu</em> (2026-03-17)</div>
+      <div class="text-neutral-500 ml-4">https://arxiv.org/abs/2603.16683v1</div>
+      <div class="text-emerald-400 ml-4 mb-6">→ Learning-based joint controllers enable salamander robots to coordinate amphibious locomotion without hand-coded CPGs, with sim-to-real transfer validated on real hardware.</div>
+
+      <div class="text-neutral-500 mb-2">### Imperial College — Personal Robotics Lab</div>
+      <div class="text-neutral-300">- <span class="text-white">ViTac-Tracing: Visual-Tactile Imitation Learning of Deformable Object Tracing</span> — <em>Yiannis Demiris</em> (2026-03-19)</div>
+      <div class="text-neutral-500 ml-4">https://arxiv.org/abs/2603.18784v1</div>
+      <div class="text-emerald-400 ml-4 mb-6">→ Unified visual-tactile imitation learning enables generalized deformable object manipulation across categories without object-specific models.</div>
+
+      <div class="text-neutral-500 mb-2">### Oxford Robotics Institute</div>
+      <div class="text-neutral-300">- <span class="text-white">Sim-to-Real Transfer for Muscle-Actuated Robots via Generalized Actuator Networks</span> — <em>Ingmar Posner</em> (2026-04-10)</div>
+      <div class="text-neutral-500 ml-4">https://arxiv.org/abs/2604.09487v1</div>
+      <div class="text-emerald-400 ml-4 mb-2">→ Neural network actuator models enable sim-to-real transfer for tendon-driven robots without torque sensors, unlocking practical deployment of muscle-actuated systems.</div>
+    </div>
+  </section>
+
+  <section class="max-w-4xl mx-auto px-6 py-24">
+    <h2 class="text-3xl md:text-4xl font-semibold mb-3 text-center">Plus a draft email per paper</h2>
+    <p class="text-neutral-400 text-center mb-12">Specific. Technical. No buzzwords. Generated in 2 seconds.</p>
+
+    <div class="bg-neutral-900 border border-neutral-800 rounded-lg p-8 font-mono text-sm leading-relaxed text-neutral-300">
+      <div class="text-white">Hi Ingmar,</div><br/>
+      I read your GeAN paper and got stuck on one thing: you're learning the actuator model directly from joint trajectories without torque feedback, but tendon-driven systems have that inherent hysteresis you mention. How does the network handle the fact that the same joint position can be reached with different internal tensions depending on the trajectory history? I'm curious whether you're implicitly learning a state-dependent model or if there's something about the RL policy training that makes hysteresis less of a problem than classical control would suggest.
+      <br/><br/>
+      I'm an investor at MoreMarkets and spent a few years building infrastructure at NEAR before moving into frontier tech. Would be great to grab 15 minutes and hear what you're seeing as the real bottlenecks for deploying these systems beyond the lab.
+      <br/><br/>
+      Best,<br/>
+      <span class="text-neutral-600">[Sender]</span>
+    </div>
+
+    <div class="text-center mt-6 text-sm text-neutral-500">
+      Generated by <code class="font-mono text-neutral-400">frontier-scout draft 2604.09487v1</code>
+    </div>
+  </section>
+
+  <section class="max-w-6xl mx-auto px-6 py-24 border-y border-neutral-900">
+    <h2 class="text-3xl md:text-4xl font-semibold mb-12 text-center">The lab map</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
+      <div class="space-y-4">
+        <div class="flex items-baseline justify-between border-b border-neutral-900 pb-3">
+          <div><span class="font-semibold">United Kingdom</span> <span class="text-neutral-500">— Imperial, Oxford, Cambridge, UCL Gatsby (where DeepMind started), Edinburgh</span></div>
+          <div class="font-mono text-neutral-500">15</div>
+        </div>
+        <div class="flex items-baseline justify-between border-b border-neutral-900 pb-3">
+          <div><span class="font-semibold">Germany</span> <span class="text-neutral-500">— TUM, Tübingen ×4, Heidelberg ×3, Bonn ×2</span></div>
+          <div class="font-mono text-neutral-500">13</div>
+        </div>
+        <div class="flex items-baseline justify-between border-b border-neutral-900 pb-3">
+          <div><span class="font-semibold">Switzerland</span> <span class="text-neutral-500">— ETH Zurich ×4, EPFL ×3</span></div>
+          <div class="font-mono text-neutral-500">7</div>
+        </div>
+        <div class="flex items-baseline justify-between border-b border-neutral-900 pb-3">
+          <div><span class="font-semibold">France</span> <span class="text-neutral-500">— INRIA project-teams (Paris, Grenoble ×2, Lille, Rennes, Bordeaux)</span></div>
+          <div class="font-mono text-neutral-500">7</div>
+        </div>
+      </div>
+      <div class="space-y-4">
+        <div class="flex items-baseline justify-between border-b border-neutral-900 pb-3">
+          <div><span class="font-semibold">Italy</span> <span class="text-neutral-500">— Polimi ×2, Sapienza, Pisa, Naples</span></div>
+          <div class="font-mono text-neutral-500">5</div>
+        </div>
+        <div class="flex items-baseline justify-between border-b border-neutral-900 pb-3">
+          <div><span class="font-semibold">Netherlands</span> <span class="text-neutral-500">— TU Delft ×2, Twente</span></div>
+          <div class="font-mono text-neutral-500">3</div>
+        </div>
+        <div class="flex items-baseline justify-between border-b border-neutral-900 pb-3">
+          <div><span class="font-semibold">Belgium / Finland</span> <span class="text-neutral-500">— KU Leuven, Aalto ×2</span></div>
+          <div class="font-mono text-neutral-500">4</div>
+        </div>
+        <div class="flex items-baseline justify-between border-b border-neutral-900 pb-3">
+          <div><span class="font-semibold">Sweden / Spain / Czechia / Estonia</span> <span class="text-neutral-500">— KTH, Carlos III, CTU Prague, Tartu</span></div>
+          <div class="font-mono text-neutral-500">4</div>
+        </div>
+      </div>
+    </div>
+    <p class="text-center text-neutral-500 text-sm mt-12">
+      All have public PhD rosters and recent arXiv papers. Suggest a missing lab on
+      <a href="https://github.com/altanapps/frontier-scout/issues" class="underline hover:text-white">GitHub</a>.
+    </p>
+  </section>
+
+  <section id="waitlist" class="max-w-2xl mx-auto px-6 py-24 text-center">
+    <h2 class="text-4xl md:text-5xl font-semibold mb-4">Get tomorrow's digest.</h2>
+    <p class="text-neutral-400 mb-12 text-lg">
+      Daily intel on every research lab worth watching. Free during beta.
+    </p>
+
+    <!--
+      EMAIL CAPTURE — replace the form action with your own endpoint.
+      Cheapest options:
+        Formspree: https://formspree.io  (free 50/mo, paste form ID)
+        Tally:     https://tally.so       (free, embed snippet)
+        Plunk:     https://useplunk.com   (free 3K emails/mo, full control)
+      Or remove the form entirely and rely on the GitHub star CTA above.
+    -->
+    <form action="https://formspree.io/f/REPLACE_ME" method="POST" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+      <input
+        type="email"
+        name="email"
+        required
+        placeholder="email@firm.com"
+        class="flex-1 bg-neutral-900 border border-neutral-800 rounded px-4 py-3 text-white placeholder-neutral-600 focus:outline-none focus:border-neutral-600"
+      />
+      <button type="submit" class="bg-white text-black px-6 py-3 rounded font-medium hover:bg-neutral-200 transition whitespace-nowrap">
+        Join waitlist
+      </button>
+    </form>
+
+    <p class="text-xs text-neutral-600 mt-6">
+      Or <a href="https://github.com/altanapps/frontier-scout" class="underline hover:text-neutral-400">clone the CLI</a> and run it yourself.
+    </p>
+  </section>
+
+  <footer class="border-t border-neutral-900">
+    <div class="max-w-6xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between text-sm text-neutral-500 gap-4">
+      <div>© 2026 frontier-scout · MIT</div>
+      <div class="flex items-center gap-6">
+        <a href="https://github.com/altanapps/frontier-scout" class="hover:text-neutral-300 transition">GitHub</a>
+        <a href="https://twitter.com/altantutar" class="hover:text-neutral-300 transition">@altantutar</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
