@@ -196,7 +196,7 @@ tailwind.config = {
     <div class="flex items-center gap-6 md:gap-8 text-[12px] font-mono uppercase tracking-[0.16em]">
       <a href="#digest" class="text-chalk hover:text-paper transition">Digest</a>
       <a href="#labs" class="text-chalk hover:text-paper transition">Labs</a>
-      <a href="http://127.0.0.1:5050/" class="text-paper hover:opacity-80 transition">Dashboard ↗</a>
+      <a href="#waitlist" class="text-paper hover:opacity-80 transition">Get early access ↓</a>
       <a href="https://github.com/altanapps/frontier-scout" class="text-chalk hover:text-paper transition">GitHub</a>
     </div>
   </div>
@@ -412,10 +412,20 @@ One email per weekday morning. Free during beta, capped at $1/month after. One u
       </form>
 
       <p class="mt-6 font-mono text-[11px] text-dim">
-        Already a user? <a href="http://127.0.0.1:5050/" class="underline decoration-dotted underline-offset-4 hover:text-paper">Open the dashboard ↗</a>
-        &nbsp;·&nbsp;
-        Or <a href="https://github.com/altanapps/frontier-scout" class="underline decoration-dotted underline-offset-4 hover:text-paper">clone the CLI</a>.
+        Or <a href="https://github.com/altanapps/frontier-scout" class="underline decoration-dotted underline-offset-4 hover:text-paper">clone the CLI on GitHub</a> and run it yourself.
       </p>
+
+      <!-- ─── PRE-ORDER (Stripe Payment Link) — replace href with your Stripe link ─── -->
+      <div class="mt-16 pt-10 border-t border-[rgba(244,241,234,0.10)]">
+        <div class="font-mono text-[10px] tracking-[0.22em] uppercase text-dim mb-4">Founding 50 · lifetime price-lock</div>
+        <p class="text-chalk text-[14px] leading-[1.7] mb-6 max-w-md mx-auto">
+          $99 once, locks Pro tier for life. First 50 customers only. No subscription, no questions, refund anytime in the first 30 days.
+        </p>
+        <a href="https://buy.stripe.com/REPLACE_WITH_YOUR_PAYMENT_LINK"
+           class="field whitespace-nowrap font-medium inline-block">
+          Lifetime access — $99 →
+        </a>
+      </div>
     </div>
   </div>
 </section>

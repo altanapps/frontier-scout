@@ -1,8 +1,14 @@
-# frontier-scout
+# Meridian
 
-Track research labs. Watch new papers. Find handles. Draft outreach. Catch when someone starts a new repo.
+> Daily intel on every European deep-tech research lab worth watching.
 
-A small CLI for systematically scouting frontier-tech research — robotics, BCI, fusion, biotech, anything that publishes on arXiv. Built for VCs, recruiters, journalists, and operators who want a steady signal from the labs they care about without doomscrolling Twitter.
+**What this is** — a scouting layer over [OpenAlex](https://openalex.org). Watches 33 EU/UK frontier research labs (Imperial, Oxford, ETH, EPFL, UCL Gatsby — where DeepMind started — plus 28 more), pulls new papers and affiliation changes daily, and drafts paper-anchored outreach emails so you can move from *"interesting paper"* to *"sent thoughtful email"* in under 5 minutes.
+
+**Built for** — VCs scouting deep-tech, recruiters sourcing for AI/robotics roles, researchers tracking peers, journalists covering the field.
+
+**Real day-one finding:** Yarin Gal (Oxford OATML) lists Apple as a co-affiliation on his 2026 papers. No press release, no Twitter bio change. The paper says it. Most VCs aren't reading paper affiliations.
+
+— [meridian.so](https://meridian.so) · [Why it exists](https://twitter.com/altantutar/status/<original-tweet-id>) · MIT licensed
 
 ## What it does
 

@@ -24,15 +24,33 @@
 
 <div class="hair mb-10"></div>
 
-{% if signals %}
+{% if sig_industry %}
 <section class="mb-14">
-  <div class="label mb-5">Signals · {{ signals|length }}</div>
-  <ul class="space-y-3">
-  {% for s in signals %}
-    <li class="text-sm flex items-baseline gap-4 border-b border-[rgba(244,241,234,0.08)] pb-3">
-      <span class="meta normal-case tracking-normal whitespace-nowrap">{{ s.observed_at[:10] }}</span>
-      <span class="flex-1"><span class="text-paper">{{ s.person_name }}</span> <span class="text-dim">·</span> <span class="text-chalk">{{ s.detail }}</span></span>
-      {% if s.url %}<a href="{{ s.url }}" class="text-dim hover:text-paper text-xs" target="_blank">↗</a>{% endif %}
+  <div class="flex items-baseline justify-between mb-5">
+    <div class="label">High-conviction signals · {{ sig_industry|length }}</div>
+    {% if sig_other_count %}<span class="meta normal-case tracking-normal text-dim">{{ sig_other_count }} lower-priority flags hidden</span>{% endif %}
+  </div>
+  <p class="text-sm text-dim mb-6 max-w-2xl leading-relaxed">
+    Researchers whose recent paper affiliations differ from their academic lab — corporate roles, dual appointments, possible relocations. Scored 1–10 by industry signal × researcher influence × geography move.
+  </p>
+  <ul class="space-y-6">
+  {% for s in sig_industry %}
+    <li class="border-l-2 {% if s.kind == 'industry_affiliation' %}border-amber-600/70{% else %}border-[rgba(244,241,234,0.20)]{% endif %} pl-5 py-2">
+      <div class="flex items-baseline justify-between gap-4 mb-2">
+        <div class="flex items-baseline gap-3">
+          <span class="font-mono text-xs text-amber-300 bg-amber-950/30 px-2 py-0.5 rounded border border-amber-800/30">{{ s.score }}/10</span>
+          <span class="text-paper font-medium text-base">{{ s.person_name }}</span>
+          <span class="meta normal-case tracking-normal">{{ s.lab }}</span>
+        </div>
+        {% if s.url %}<a href="{{ s.url }}" class="text-dim hover:text-paper text-xs" target="_blank">OpenAlex ↗</a>{% endif %}
+      </div>
+      <div class="text-chalk leading-relaxed text-sm">{{ s.detail }}</div>
+      <div class="text-amber-300/90 italic mt-2 text-sm">
+        {% if s.kind == 'industry_affiliation' %}→ Corporate role likely. Email their prolific PhDs — they often start companies when PI moves to industry.
+        {% elif s.kind == 'dual_academic' %}→ Dual appointment or possible move. Ask what they're working on at the second institution.
+        {% else %}→ Worth a 2-line cold email asking what's behind the new affiliation.
+        {% endif %}
+      </div>
     </li>
   {% endfor %}
   </ul>

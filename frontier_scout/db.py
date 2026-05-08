@@ -57,6 +57,10 @@ MIGRATIONS = [
     "ALTER TABLE papers ADD COLUMN doi TEXT",
     "ALTER TABLE papers ADD COLUMN venue TEXT",
     "ALTER TABLE papers ADD COLUMN openalex_id TEXT",
+    "ALTER TABLE people ADD COLUMN openalex_id TEXT",
+    "ALTER TABLE people ADD COLUMN h_index INTEGER",
+    "ALTER TABLE people ADD COLUMN citation_count INTEGER",
+    "ALTER TABLE signals ADD COLUMN score INTEGER DEFAULT 5",
 ]
 
 

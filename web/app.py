@@ -1,20 +1,44 @@
 """V0 web app — single test user, reads from existing frontier.db.
 
-Run:
+Run locally:
     .venv/bin/flask --app web.app run --debug --port 5050
+
+Deploy:
+    Procfile included for Heroku/Railway/Fly.io. Set MERIDIAN_PASSWORD
+    env var to enable HTTP basic auth (otherwise anyone with the URL
+    can view/edit). Set ANTHROPIC_API_KEY for draft generation.
 """
 
+import os
 from collections import defaultdict
 from datetime import datetime, timezone
+from functools import wraps
 from pathlib import Path
 
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, jsonify, Response
 
 from frontier_scout import db, extract
 
 
 DB_PATH = Path(__file__).resolve().parent.parent / "frontier.db"
 TEST_USER_ID = 1
+SHARED_PASSWORD = os.getenv("MERIDIAN_PASSWORD")
+
+
+def _require_password(handler):
+    """HTTP basic-auth guard. No-op if MERIDIAN_PASSWORD is unset (local dev)."""
+    @wraps(handler)
+    def wrapper(*args, **kwargs):
+        if not SHARED_PASSWORD:
+            return handler(*args, **kwargs)
+        auth = request.authorization
+        if not auth or auth.password != SHARED_PASSWORD:
+            return Response(
+                "Auth required.", 401,
+                {"WWW-Authenticate": 'Basic realm="Meridian"'},
+            )
+        return handler(*args, **kwargs)
+    return wrapper
 
 
 def _ensure_user_tables(con):
@@ -41,6 +65,22 @@ def _ensure_user_tables(con):
 
 
 app = Flask(__name__)
+
+
+@app.before_request
+def _guard():
+    """Apply password guard to every route except /health."""
+    if request.path == "/health":
+        return None
+    if not SHARED_PASSWORD:
+        return None
+    auth = request.authorization
+    if not auth or auth.password != SHARED_PASSWORD:
+        return Response(
+            "Auth required.", 401,
+            {"WWW-Authenticate": 'Basic realm="Meridian"'},
+        )
+    return None
 
 
 @app.route("/")
@@ -82,16 +122,20 @@ def dashboard():
 
         people_count = con.execute("SELECT COUNT(*) FROM people").fetchone()[0]
         labs_count = con.execute("SELECT COUNT(DISTINCT lab) FROM people").fetchone()[0]
-        signals = con.execute(
-            "SELECT * FROM signals ORDER BY observed_at DESC LIMIT 20"
-        ).fetchall()
+        sig_industry = [dict(r) for r in con.execute(
+            "SELECT * FROM signals WHERE score >= 5 ORDER BY score DESC, observed_at DESC LIMIT 12"
+        ).fetchall()]
+        sig_other_count = con.execute(
+            "SELECT COUNT(*) FROM signals WHERE score < 5"
+        ).fetchone()[0]
 
     return render_template(
         "dashboard.html",
         papers_by_lab=dict(sorted(papers_by_lab.items())),
         people_count=people_count,
         labs_count=labs_count,
-        signals=[dict(s) for s in signals],
+        sig_industry=sig_industry,
+        sig_other_count=sig_other_count,
         today=datetime.now(timezone.utc).strftime("%A %d %B %Y"),
     )
 
