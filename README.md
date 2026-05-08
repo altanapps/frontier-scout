@@ -10,6 +10,7 @@ A small CLI for systematically scouting frontier-tech research — robotics, BCI
 |---|---|
 | `init` | Write a starter `labs.yaml` |
 | `find-labs <topic>` | Auto-discover EU/UK labs by topic via Claude web search |
+| `verify` | HEAD every people_url in parallel; optionally write an alive-only YAML |
 | `roster` | Scrape lab people-pages → researchers in SQLite (Claude extracts) |
 | `enrich` | Find each researcher's GitHub / Twitter / site / email via web search |
 | `papers` | Pull new arXiv preprints from everyone in the roster |
@@ -101,9 +102,19 @@ For a typical setup (15 labs, ~600 people, ~30 new papers/week) total monthly sp
 - **Web frontend.** The digest *is* the frontend.
 - **Multi-user, auth, hosted version.** This is a single-user CLI.
 
+## URL decay is real
+
+Lab pages move. In live testing, **5 of 10** URLs in the original starter list returned 404 within months of being curated, and **6 of 58** in the larger reference list (`examples/eu-uk-frontier-labs.yaml`) are dead today. Always `verify` before a roster run:
+
+```bash
+frontier-scout verify --write labs.alive.yaml
+mv labs.alive.yaml labs.yaml
+frontier-scout roster
+```
+
 ## Status
 
-V0.1. Tested against ~10 robotics labs. Lab pages with heavy JS will need a Playwright fallback (open an issue or PR). Roster extraction quality depends on the lab page format — patchy on departmental pages with hundreds of names mixed across roles.
+V0.3. Tested against ~10 robotics labs end-to-end (roster → papers → digest). Lab pages with heavy JS will need a Playwright fallback (open an issue or PR). Roster extraction quality depends on the lab page format — patchy on departmental pages with hundreds of names mixed across roles.
 
 ## License
 

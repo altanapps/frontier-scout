@@ -14,6 +14,7 @@ from frontier_scout import (
     extract,
     scrape,
     signals as signals_mod,
+    verify as verify_mod,
 )
 
 
@@ -327,6 +328,41 @@ def people_cmd(db_path: Path, lab: str | None, enriched: bool) -> None:
         if r["personal_site"]: bits.append(r["personal_site"])
         if r["email"]: bits.append(r["email"])
         click.echo(f"[{r['lab']}] " + " | ".join(bits))
+
+
+@main.command()
+@click.option("--config-path", "config_path", default="labs.yaml",
+              type=click.Path(exists=True, path_type=Path))
+@click.option("--write", "write_alive", type=click.Path(path_type=Path),
+              help="Write alive-only YAML to this path.")
+@click.option("--timeout", default=15.0, type=float)
+def verify(config_path: Path, write_alive: Path | None, timeout: float) -> None:
+    """HEAD every people_url and report which labs are still alive."""
+    import yaml as yaml_mod
+    labs = config.load(config_path)
+    results = verify_mod.check_all(labs, timeout=timeout)
+    alive: list = []
+    for lab, ok, status in results:
+        marker = "✓" if ok else "✗"
+        click.echo(f"{marker} {status:18} {lab.name}")
+        if ok:
+            alive.append(lab)
+    click.echo(f"\nalive: {len(alive)} / {len(labs)} ({100*len(alive)//max(1,len(labs))}%)")
+    if write_alive:
+        data = {
+            "labs": [
+                {
+                    "name": l.name,
+                    "people_url": l.people_url,
+                    "arxiv_categories": l.arxiv_categories,
+                }
+                for l in alive
+            ]
+        }
+        write_alive.write_text(
+            yaml_mod.dump(data, sort_keys=False, allow_unicode=True, width=200)
+        )
+        click.echo(f"Wrote {len(alive)} alive labs to {write_alive}")
 
 
 def _parse_since(s: str) -> datetime:
