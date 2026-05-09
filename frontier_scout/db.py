@@ -61,6 +61,8 @@ MIGRATIONS = [
     "ALTER TABLE people ADD COLUMN h_index INTEGER",
     "ALTER TABLE people ADD COLUMN citation_count INTEGER",
     "ALTER TABLE signals ADD COLUMN score INTEGER DEFAULT 5",
+    "ALTER TABLE people ADD COLUMN linkedin_url TEXT",
+    "ALTER TABLE people ADD COLUMN verified_at TEXT",
 ]
 
 

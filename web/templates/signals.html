@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Signals — Meridian{% endblock %}
+{% block content %}
+
+<header class="mb-8 max-w-3xl">
+  <div class="label mb-3">Signals</div>
+  <h1 class="display text-4xl md:text-5xl font-light text-paper">Who do I email this morning?</h1>
+  <p class="text-chalk leading-relaxed mt-4 text-sm max-w-2xl">
+    Public clues that something's changing — a corporate affiliation appearing on a paper, a researcher gone dark, an unexpected dual posting. Each is scored 1–10 by signal type × researcher influence × geography move.
+    Click into a researcher to see their roster co-authors — usually the better email targets when a PI moves to industry.
+  </p>
+</header>
+
+<form class="mb-10 flex gap-3 flex-wrap items-center">
+  <span class="text-dim font-mono text-xs uppercase tracking-widest">Show</span>
+  <select name="kind" class="bg-ink border border-[rgba(244,241,234,0.18)] px-3 py-1.5 text-sm text-paper focus:outline-none focus:border-[rgba(244,241,234,0.55)]">
+    <option value="">all signal types</option>
+    {% for k in kinds %}<option value="{{ k }}" {% if k == kind_filter %}selected{% endif %}>{{ k }}</option>{% endfor %}
+  </select>
+  <span class="text-dim font-mono text-xs uppercase tracking-widest">scored</span>
+  <select name="min_score" class="bg-ink border border-[rgba(244,241,234,0.18)] px-3 py-1.5 text-sm text-paper focus:outline-none focus:border-[rgba(244,241,234,0.55)]">
+    <option value="1"  {% if min_score == 1 %}selected{% endif %}>1+ (everything)</option>
+    <option value="5"  {% if min_score == 5 %}selected{% endif %}>5+ (worth a look)</option>
+    <option value="7"  {% if min_score == 7 %}selected{% endif %}>7+ (high conviction)</option>
+    <option value="9"  {% if min_score == 9 %}selected{% endif %}>9+ (act today)</option>
+  </select>
+  <button class="btn-paper">Apply</button>
+</form>
+
+<div class="hair mb-8"></div>
+
+<div class="label mb-6">{{ signals|length }} signals</div>
+
+{% if not signals %}
+  <p class="text-dim text-sm leading-relaxed max-w-xl">No signals match these filters. Try lowering the score threshold or removing the kind filter.</p>
+{% endif %}
+
+<ul class="space-y-8">
+{% for s in signals %}
+  <li class="border-l-2 {% if s.score >= 8 %}border-amber-600/70{% elif s.score >= 5 %}border-[rgba(244,241,234,0.30)]{% else %}border-[rgba(244,241,234,0.10)]{% endif %} pl-6 py-2">
+    <div class="flex items-baseline justify-between gap-4 flex-wrap mb-3">
+      <div class="flex items-baseline gap-3 flex-wrap">
+        <span class="font-mono text-xs {% if s.score >= 8 %}text-amber-300 bg-amber-950/30 border-amber-800/30{% else %}text-chalk bg-[rgba(244,241,234,0.05)] border-[rgba(244,241,234,0.15)]{% endif %} px-2 py-0.5 rounded border">{{ s.score }}/10</span>
+        {% if s.person %}
+          <a href="/people/{{ s.person.id }}" class="text-paper font-medium text-base hover:underline decoration-dotted underline-offset-4">{{ s.person_name }}</a>
+        {% else %}
+          <span class="text-paper font-medium text-base">{{ s.person_name }}</span>
+        {% endif %}
+        <span class="meta normal-case tracking-normal">{{ s.lab }}</span>
+        <span class="font-mono text-[10px] text-dim uppercase tracking-widest">{{ s.kind }}</span>
+      </div>
+      <div class="flex gap-3 text-xs">
+        {% if s.url %}<a href="{{ s.url }}" class="text-dim hover:text-paper" target="_blank">OpenAlex ↗</a>{% endif %}
+        {% if s.person and s.person.email %}<a href="mailto:{{ s.person.email }}" class="text-amber-300 hover:text-paper">✉ Email</a>{% endif %}
+      </div>
+    </div>
+
+    <div class="text-chalk leading-relaxed text-sm mb-3 max-w-3xl">{{ s.detail }}</div>
+
+    {% if s.coauthors_in_roster %}
+    <div class="bg-[rgba(244,241,234,0.03)] border border-[rgba(244,241,234,0.10)] p-4 mt-3 max-w-3xl">
+      <div class="label mb-2">Co-authors in your roster · {{ s.coauthors_in_roster|length }}</div>
+      <p class="text-xs text-dim mb-3 leading-relaxed">
+        These researchers in your DB have co-authored with {{ s.person_name }} — often the better targets to email when a PI moves to industry, since their advisor is half-out the door.
+      </p>
+      <ul class="space-y-1.5">
+      {% for name, count in s.coauthors_in_roster %}
+        <li class="text-sm text-chalk flex items-baseline gap-3">
+          <span class="text-paper">{{ name }}</span>
+          <span class="meta normal-case tracking-normal">{{ count }} paper{% if count != 1 %}s{% endif %} co-authored</span>
+        </li>
+      {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="text-amber-300/90 italic mt-3 text-sm max-w-3xl">
+      {% if s.kind == 'industry_affiliation' %}→ Email the co-authors above. The PI is likely captured by the company; the PhDs are the ones who'll start things.
+      {% elif s.kind == 'dual_academic' %}→ The second institution is the lead — ask what's behind the dual posting (sabbatical? new role? collaboration?).
+      {% elif s.kind == 'no_recent_affiliation' %}→ Researcher hasn't published in 2025-2026. Could be retired, moved off-platform, or in stealth. Worth a manual LinkedIn check before treating as a real "moved" signal.
+      {% else %}→ Unexpected affiliation. Worth a 2-line cold email asking what's behind it.
+      {% endif %}
+    </div>
+  </li>
+{% endfor %}
+</ul>
+
+{% endblock %}

@@ -169,12 +169,13 @@ def enrich(db_path: Path, limit: int, force: bool) -> None:
                 continue
             con.execute(
                 """UPDATE people
-                   SET github_handle = ?, twitter_handle = ?, personal_site = ?,
-                       email = ?, enriched_at = ?
+                   SET github_handle = ?, twitter_handle = ?, linkedin_url = ?,
+                       personal_site = ?, email = ?, enriched_at = ?
                    WHERE id = ?""",
                 (
                     (data.get("github_handle") or "").strip(),
                     (data.get("twitter_handle") or "").strip().lstrip("@"),
+                    (data.get("linkedin_url") or "").strip(),
                     (data.get("personal_site") or "").strip(),
                     (data.get("email") or "").strip(),
                     datetime.now(timezone.utc).isoformat(),
@@ -183,7 +184,7 @@ def enrich(db_path: Path, limit: int, force: bool) -> None:
             )
             found = [
                 f"{k}={data[k]}"
-                for k in ("github_handle", "twitter_handle", "personal_site", "email")
+                for k in ("github_handle", "twitter_handle", "linkedin_url", "personal_site", "email")
                 if data.get(k)
             ]
             click.echo(f"  {', '.join(found) if found else '(no public profiles found)'}")

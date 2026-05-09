@@ -30,10 +30,11 @@
         </div>
         <div class="meta text-right">{{ p.lab }}</div>
       </div>
-      <div class="meta mt-1 flex gap-4 normal-case tracking-normal">
-        {% if p.github_handle %}<span>gh:{{ p.github_handle }}</span>{% endif %}
+      <div class="meta mt-1 flex gap-4 flex-wrap normal-case tracking-normal">
+        {% if p.email %}<span class="text-amber-300">✉ {{ p.email }}</span>{% endif %}
+        {% if p.linkedin_url %}<span>in</span>{% endif %}
         {% if p.twitter_handle %}<span>@{{ p.twitter_handle }}</span>{% endif %}
-        {% if p.email %}<span>{{ p.email }}</span>{% endif %}
+        {% if p.github_handle %}<span>gh:{{ p.github_handle }}</span>{% endif %}
         {% if p.research_area %}<span class="text-dim">· {{ p.research_area }}</span>{% endif %}
       </div>
     </a>

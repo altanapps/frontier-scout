@@ -10,12 +10,18 @@
   <div class="meta normal-case tracking-normal mt-3 text-chalk">{{ person.lab }}</div>
 
   <div class="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm font-mono">
-    {% if person.github_handle %}<a href="https://github.com/{{ person.github_handle }}" target="_blank" class="text-chalk hover:text-paper">gh:{{ person.github_handle }}</a>{% endif %}
+    {% if person.email %}<a href="mailto:{{ person.email }}" class="text-amber-300 hover:text-paper">✉ {{ person.email }}</a>{% endif %}
+    {% if person.linkedin_url %}<a href="{{ person.linkedin_url }}" target="_blank" class="text-chalk hover:text-paper">LinkedIn ↗</a>{% endif %}
     {% if person.twitter_handle %}<a href="https://twitter.com/{{ person.twitter_handle }}" target="_blank" class="text-chalk hover:text-paper">@{{ person.twitter_handle }}</a>{% endif %}
+    {% if person.github_handle %}<a href="https://github.com/{{ person.github_handle }}" target="_blank" class="text-chalk hover:text-paper">gh:{{ person.github_handle }}</a>{% endif %}
     {% if person.personal_site %}<a href="{{ person.personal_site }}" target="_blank" class="text-chalk hover:text-paper truncate max-w-xs">{{ person.personal_site }}</a>{% endif %}
-    {% if person.email %}<a href="mailto:{{ person.email }}" class="text-chalk hover:text-paper">{{ person.email }}</a>{% endif %}
     {% if person.profile_url %}<a href="{{ person.profile_url }}" target="_blank" class="text-dim hover:text-paper truncate max-w-xs">Lab profile ↗</a>{% endif %}
   </div>
+  {% if not (person.email or person.linkedin_url or person.twitter_handle or person.github_handle) %}
+  <div class="mt-4 text-xs text-dim italic max-w-md">
+    No public profiles resolved yet for this researcher. Run <code class="font-mono text-chalk">frontier-scout enrich</code> to attempt lookup via Claude web search.
+  </div>
+  {% endif %}
   {% if person.research_area %}
   <div class="text-sm text-dim mt-4 leading-relaxed">{{ person.research_area }}</div>
   {% endif %}

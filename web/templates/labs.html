@@ -2,28 +2,175 @@
 {% block title %}Labs — Meridian{% endblock %}
 {% block content %}
 
-<header class="mb-10 max-w-3xl">
+<header class="mb-8 max-w-3xl">
   <div class="label mb-3">Labs</div>
   <h1 class="display text-4xl md:text-5xl font-light text-paper">{{ labs|length }} labs you're tracking.</h1>
+  <p class="text-chalk leading-relaxed mt-3 text-sm">Click a star to open a lab. Hover for paper count. Multiple labs in the same city share a halo.</p>
 </header>
 
-<div class="hair mb-6"></div>
+<style>
+  .map-stage { position: relative; height: 560px; background: rgba(244,241,234,0.012); border: 1px solid rgba(244,241,234,0.08); }
+  .map-svg { display: block; width: 100%; height: 100%; }
+  .country-stroke { fill: none; stroke: rgba(244,241,234,0.22); stroke-width: 0.5; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+  .country-fill-path { fill: rgba(244,241,234,0.025); }
+  .country-tracked .country-fill-path { fill: rgba(244,241,234,0.06); }
+  .lab-star { fill: #f4f1ea; cursor: pointer; transition: filter 200ms ease, r 200ms ease; }
+  .lab-star:hover { filter: drop-shadow(0 0 8px rgba(244,241,234,0.95)); }
+  .lab-halo { fill: rgba(244,241,234,0.06); pointer-events: none; }
+  .city-label { fill: #cfc8b8; font-family: "JetBrains Mono", monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; pointer-events: none; }
+  .lab-tip {
+    position: absolute; pointer-events: none;
+    background: rgba(7,7,8,0.94); border: 1px solid rgba(244,241,234,0.20);
+    color: #f4f1ea; padding: 10px 12px; font-size: 11px; line-height: 1.5;
+    transform: translate(12px, -50%); opacity: 0; transition: opacity 160ms ease;
+    backdrop-filter: blur(6px); max-width: 280px; z-index: 10;
+  }
+  .lab-tip.show { opacity: 1; }
+  .lab-tip .tip-cat { font-family: "JetBrains Mono", monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #7d7868; margin-bottom: 4px; }
+  .lab-tip .tip-name { font-weight: 500; letter-spacing: -0.01em; }
+  .lab-tip .tip-meta { font-family: "JetBrains Mono", monospace; font-size: 10px; color: #cfc8b8; margin-top: 6px; }
+</style>
 
+<div class="map-stage" id="map-stage">
+  <svg class="map-svg" id="lab-map" viewBox="0 0 1000 560" preserveAspectRatio="xMidYMid meet">
+    <g id="geo-fill"></g>
+    <g id="geo-stroke"></g>
+    <g id="city-labels"></g>
+    <g id="lab-stars"></g>
+  </svg>
+  <div class="lab-tip" id="lab-tip"></div>
+</div>
+
+<div class="hair my-10"></div>
+
+<div class="label mb-4">All labs · ranked by paper density</div>
 <ul class="divide-y divide-[rgba(244,241,234,0.08)]">
-{% for l in labs %}
+{% for l in labs|sort(attribute='paper_count', reverse=True) %}
   <li>
-    <a href="/labs/{{ l.lab }}" class="row block py-4 px-2 -mx-2">
+    <a href="/labs/{{ l.lab }}" class="row block py-3 px-2 -mx-2">
       <div class="flex items-baseline justify-between gap-6">
-        <div class="text-paper font-medium">{{ l.lab }}</div>
+        <div>
+          <span class="text-paper font-medium">{{ l.lab }}</span>
+          <span class="meta normal-case tracking-normal ml-2 text-dim">{{ l.city }}</span>
+        </div>
         <div class="meta normal-case tracking-normal flex gap-5 whitespace-nowrap">
           <span><span class="text-paper">{{ l.people_count }}</span> <span class="text-dim">people</span></span>
           <span><span class="text-paper">{{ l.paper_count }}</span> <span class="text-dim">papers</span></span>
-          {% if l.last_paper %}<span class="text-dim">last paper {{ l.last_paper[:10] }}</span>{% endif %}
+          {% if l.last_paper %}<span class="text-dim">{{ l.last_paper[:10] }}</span>{% endif %}
         </div>
       </div>
     </a>
   </li>
 {% endfor %}
 </ul>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+
+<script>
+const LABS = {{ labs|tojson }};
+const TRACKED_COUNTRIES = new Set(LABS.map(l => l.country_code));
+
+const W = 1000, H = 560;
+const PROJ = d3.geoMercator().center([10, 51]).scale(900).translate([W / 2, H / 2 + 60]);
+const pathGen = d3.geoPath(PROJ);
+const tip = document.getElementById("lab-tip");
+const stage = document.getElementById("map-stage");
+
+function showTip(html, x, y) {
+  tip.innerHTML = html;
+  const rect = stage.getBoundingClientRect();
+  tip.style.left = (x - rect.left) + "px";
+  tip.style.top = (y - rect.top) + "px";
+  tip.classList.add("show");
+}
+function hideTip() { tip.classList.remove("show"); }
+
+fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json")
+  .then(r => r.json())
+  .then(world => {
+    const feats = topojson.feature(world, world.objects.countries).features;
+    const fillG = document.getElementById("geo-fill");
+    const strokeG = document.getElementById("geo-stroke");
+    feats.forEach(f => {
+      const code = f.properties.iso_a2 || f.properties.ISO_A2;
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", pathGen(f));
+      path.setAttribute("class", "country-fill-path");
+      const wrapper = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      wrapper.classList.add("country-fill");
+      if (TRACKED_COUNTRIES.has(code)) wrapper.classList.add("country-tracked");
+      wrapper.appendChild(path);
+      fillG.appendChild(wrapper);
+
+      const stroke = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      stroke.setAttribute("d", pathGen(f));
+      stroke.setAttribute("class", "country-stroke");
+      strokeG.appendChild(stroke);
+    });
+
+    // Group labs by city for halo + jitter
+    const byCity = new Map();
+    for (const lab of LABS) {
+      if (!byCity.has(lab.city)) byCity.set(lab.city, []);
+      byCity.get(lab.city).push(lab);
+    }
+
+    const labelG = document.getElementById("city-labels");
+    const starG = document.getElementById("lab-stars");
+
+    for (const [city, group] of byCity) {
+      const [cx, cy] = PROJ([group[0].lon, group[0].lat]);
+
+      // Ring radius scales with cluster size so 7 labs don't overlap
+      const ringR = group.length <= 1 ? 0 : 6 + group.length * 2.2;
+
+      // City halo (encompasses the ring + a small breathing buffer)
+      const halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      halo.setAttribute("cx", cx); halo.setAttribute("cy", cy);
+      halo.setAttribute("r", Math.max(12, ringR + 6));
+      halo.setAttribute("class", "lab-halo");
+      starG.appendChild(halo);
+
+      // City label below the cluster, centered
+      const labelOffset = ringR + 14;
+      const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      label.setAttribute("x", cx);
+      label.setAttribute("y", cy + labelOffset);
+      label.setAttribute("text-anchor", "middle");
+      label.setAttribute("class", "city-label");
+      label.textContent = city + (group.length > 1 ? ` · ${group.length}` : "");
+      labelG.appendChild(label);
+
+      // Place each lab as a star around the ring, starting at top
+      group.forEach((lab, i) => {
+        const angle = (i / group.length) * Math.PI * 2 - Math.PI / 2;
+        const x = cx + Math.cos(angle) * ringR;
+        const y = cy + Math.sin(angle) * ringR;
+        const star = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        star.setAttribute("cx", x); star.setAttribute("cy", y);
+        star.setAttribute("r", 2.4 + Math.min(lab.paper_count / 4, 2.5));
+        star.setAttribute("class", "lab-star");
+        star.addEventListener("mouseenter", (e) => {
+          showTip(`
+            <div class="tip-cat">${lab.city} · ${lab.country_code}</div>
+            <div class="tip-name">${lab.lab}</div>
+            <div class="tip-meta">${lab.people_count} people · ${lab.paper_count} papers</div>
+          `, e.clientX, e.clientY);
+        });
+        star.addEventListener("mousemove", (e) => {
+          const rect = stage.getBoundingClientRect();
+          tip.style.left = (e.clientX - rect.left) + "px";
+          tip.style.top = (e.clientY - rect.top) + "px";
+        });
+        star.addEventListener("mouseleave", hideTip);
+        star.addEventListener("click", () => {
+          window.location.href = "/labs/" + encodeURIComponent(lab.lab);
+        });
+        starG.appendChild(star);
+      });
+    }
+  });
+</script>
 
 {% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Ask — Meridian{% endblock %}
+{% block content %}
+
+<header class="mb-10 max-w-3xl">
+  <div class="label mb-3">Ask</div>
+  <h1 class="display text-4xl md:text-5xl font-light text-paper">Search by thesis, not by lab.</h1>
+  <p class="text-chalk leading-relaxed mt-4 text-sm max-w-2xl">
+    Type what you're looking for in plain English. Meridian sends your question + a digest of the roster (1042 researchers, 153 papers across 42 labs) to Claude, which ranks the most relevant matches and explains each one.
+  </p>
+</header>
+
+<form method="GET" action="/ask" class="mb-10">
+  <div class="flex gap-3 flex-wrap">
+    <input type="text" name="q" value="{{ query }}" placeholder="e.g. quantum researchers with recent papers on photonic systems"
+           class="flex-1 min-w-96 bg-transparent border border-[rgba(244,241,234,0.18)] px-4 py-3 text-paper placeholder-dim focus:outline-none focus:border-[rgba(244,241,234,0.55)]" autofocus />
+    <button class="btn-paper">Ask →</button>
+  </div>
+  <p class="meta normal-case tracking-normal mt-3 text-dim">
+    Try: <a href="/ask?q=who's working on humanoid manipulation in the last 3 months" class="underline decoration-dotted hover:text-paper">humanoid manipulation, last 3 months</a>
+    · <a href="/ask?q=European researchers with recent papers on imitation learning" class="underline decoration-dotted hover:text-paper">imitation learning</a>
+    · <a href="/ask?q=who is working on simulation-based inference for neuroscience" class="underline decoration-dotted hover:text-paper">simulation-based inference for neuroscience</a>
+    · <a href="/ask?q=robotics labs in Italy with recent papers" class="underline decoration-dotted hover:text-paper">Italian robotics labs</a>
+  </p>
+</form>
+
+{% if error %}
+<div class="border border-red-800/50 bg-red-950/20 px-4 py-3 mb-8 text-sm text-red-300">{{ error }}</div>
+{% endif %}
+
+{% if query and not matches and not error %}
+<div class="text-dim text-sm leading-relaxed max-w-xl">
+  No matches found. The roster covers EU/UK robotics, AI/ML, neuroscience, biotech, quantum — try rephrasing or widening the topic.
+</div>
+{% endif %}
+
+{% if matches %}
+<div class="hair mb-8"></div>
+<div class="label mb-6">{{ matches|length }} matches</div>
+
+<ul class="space-y-8">
+{% for m in matches %}
+  <li class="border-l-2 border-amber-600/70 pl-6 py-2">
+    <div class="flex items-baseline justify-between gap-4 flex-wrap mb-2">
+      <div>
+        <a href="/people/{{ m.person.id }}" class="text-paper font-medium text-base hover:underline decoration-dotted underline-offset-4">{{ m.person.name }}</a>
+        <span class="meta normal-case tracking-normal ml-2">{{ m.person.role or '—' }} · {{ m.person.lab }}</span>
+      </div>
+      <div class="flex gap-3 text-xs">
+        {% if m.person.email %}<a href="mailto:{{ m.person.email }}" class="text-amber-300 hover:text-paper">✉ Email</a>{% endif %}
+        {% if m.person.linkedin_url %}<a href="{{ m.person.linkedin_url }}" target="_blank" class="text-chalk hover:text-paper">LinkedIn ↗</a>{% endif %}
+      </div>
+    </div>
+    <div class="text-amber-300/90 italic text-sm mb-3 max-w-3xl">→ {{ m.reason }}</div>
+    {% if m.paper %}
+    <a href="/papers/{{ m.paper.id }}" class="block bg-[rgba(244,241,234,0.03)] border border-[rgba(244,241,234,0.10)] p-4 hover:bg-[rgba(244,241,234,0.05)] max-w-3xl">
+      <div class="meta mb-2 normal-case tracking-normal">most relevant paper · {{ m.paper.published[:10] }} · arxiv:{{ m.paper.arxiv_id }}</div>
+      <div class="text-paper text-sm leading-snug">{{ m.paper.title }}</div>
+      {% if m.paper.why_it_matters %}<div class="text-chalk italic text-xs mt-2">{{ m.paper.why_it_matters }}</div>{% endif %}
+    </a>
+    {% endif %}
+  </li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% endblock %}

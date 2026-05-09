@@ -17,7 +17,7 @@ from pathlib import Path
 
 from flask import Flask, render_template, request, jsonify, Response
 
-from frontier_scout import db, extract
+from frontier_scout import db, extract, search as search_mod
 
 
 DB_PATH = Path(__file__).resolve().parent.parent / "frontier.db"
@@ -221,8 +221,83 @@ def paper_detail(paper_id: int):
     )
 
 
+@app.route("/ask", methods=["GET", "POST"])
+def ask_page():
+    query = request.values.get("q", "").strip()
+    matches: list = []
+    error = None
+    if query:
+        try:
+            payload = search_mod.search(query, DB_PATH)
+            error = payload.get("error")
+            matches = search_mod.hydrate_matches(
+                payload.get("matches", []), DB_PATH,
+            )
+        except Exception as e:
+            error = str(e)
+    return render_template("ask.html", query=query, matches=matches, error=error)
+
+
+@app.route("/signals")
+def signals_page():
+    kind_filter = request.args.get("kind", "").strip()
+    min_score = int(request.args.get("min_score", 1))
+
+    with db.connect(DB_PATH) as con:
+        sql = "SELECT * FROM signals WHERE score >= ?"
+        args: list = [min_score]
+        if kind_filter:
+            sql += " AND kind = ?"
+            args.append(kind_filter)
+        sql += " ORDER BY score DESC, observed_at DESC"
+        signals = [dict(r) for r in con.execute(sql, args).fetchall()]
+
+        # For each signal, look up the researcher's roster co-authors.
+        # We surface who else in our DB is connected to this person —
+        # the actually-actionable list when a PI moves to industry.
+        roster_names = {r["name"] for r in con.execute("SELECT name FROM people").fetchall()}
+        for s in signals:
+            person = s["person_name"]
+            papers = con.execute(
+                "SELECT authors FROM papers WHERE matched_person = ? OR authors LIKE ?",
+                (person, f"%{person}%"),
+            ).fetchall()
+            coauthors: dict[str, int] = {}
+            for p in papers:
+                for a in (p["authors"] or "").split(","):
+                    a = a.strip()
+                    if not a or a == person:
+                        continue
+                    if a in roster_names:
+                        coauthors[a] = coauthors.get(a, 0) + 1
+            s["coauthors_in_roster"] = sorted(
+                coauthors.items(), key=lambda x: -x[1]
+            )[:5]
+
+            # Person row (for h-index, lab, profile link)
+            row = con.execute(
+                "SELECT id, lab, role, h_index, citation_count, github_handle, twitter_handle, email FROM people WHERE name = ? LIMIT 1",
+                (person,),
+            ).fetchone()
+            s["person"] = dict(row) if row else None
+
+        kinds = [
+            r["kind"] for r in con.execute(
+                "SELECT DISTINCT kind FROM signals ORDER BY kind"
+            ).fetchall()
+        ]
+    return render_template(
+        "signals.html",
+        signals=signals,
+        kinds=kinds,
+        kind_filter=kind_filter,
+        min_score=min_score,
+    )
+
+
 @app.route("/labs")
 def labs_index():
+    from web.labs_geo import coords_for
     with db.connect(DB_PATH) as con:
         rows = con.execute("""
             SELECT
@@ -234,7 +309,16 @@ def labs_index():
             GROUP BY p.lab
             ORDER BY p.lab
         """).fetchall()
-    return render_template("labs.html", labs=[dict(r) for r in rows])
+    labs = []
+    for r in rows:
+        d = dict(r)
+        city, cc, lat, lon = coords_for(d["lab"])
+        d["city"] = city
+        d["country_code"] = cc
+        d["lat"] = lat
+        d["lon"] = lon
+        labs.append(d)
+    return render_template("labs.html", labs=labs)
 
 
 @app.route("/labs/<path:lab_name>")
